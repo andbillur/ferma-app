@@ -69,6 +69,20 @@ async function initDB() {
     `);
     
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS milk_sales (
+        id VARCHAR(32) PRIMARY KEY,
+        date DATE NOT NULL,
+        liters DECIMAL(6,2) NOT NULL,
+        price DECIMAL(8,2) NOT NULL,
+        total DECIMAL(10,2) NOT NULL,
+        buyer VARCHAR(100) NOT NULL,
+        phone VARCHAR(20),
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS animal_sales (
         id VARCHAR(32) PRIMARY KEY,
         animal_id VARCHAR(32) REFERENCES animals(id),
@@ -313,6 +327,52 @@ const routes = {
     
     const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
     await pool.query('DELETE FROM milk_records WHERE id = $1', [id]);
+    json(res, { success: true });
+  },
+
+  // Milk Sales
+  'GET:/milk-sales': async (req, res) => {
+    const user = await auth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    const { date, limit = 50 } = new URL(req.url, 'http://localhost').searchParams;
+    let query = 'SELECT * FROM milk_sales';
+    const params = [];
+    
+    if (date) {
+      query += ' WHERE date = $1 ORDER BY created_at DESC';
+      params.push(date);
+    } else {
+      query += ' ORDER BY date DESC, created_at DESC LIMIT $1';
+      params.push(limit);
+    }
+    
+    const result = await pool.query(query, params);
+    json(res, result.rows);
+  },
+
+  'POST:/milk-sales': async (req, res) => {
+    const user = await auth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    const data = await parseBody(req);
+    const id = uuid();
+    
+    await pool.query(`
+      INSERT INTO milk_sales (id, date, liters, price, total, buyer, phone, notes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [id, data.date, data.liters, data.price, data.total, data.buyer, data.phone, data.notes]);
+    
+    const result = await pool.query('SELECT * FROM milk_sales WHERE id = $1', [id]);
+    json(res, result.rows[0]);
+  },
+
+  'DELETE:/milk-sales/:id': async (req, res) => {
+    const user = await auth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
+    await pool.query('DELETE FROM milk_sales WHERE id = $1', [id]);
     json(res, { success: true });
   },
 

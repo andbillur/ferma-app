@@ -257,7 +257,7 @@ a { color: inherit; text-decoration: none; }
 <!-- ─── App ───────────────────────────────────────────────────────────────── -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-logo">🐄 FermaApp <span id="topbar-farm">AND BILLUR</span></div>
+    <div class="topbar-logo">🐄 FermaApp <span id="topbar-farm">Obod Diyor Niholi</span></div>
     <div class="topbar-right">
       <span class="user-chip" id="user-chip">Admin</span>
       <button class="logout-btn" onclick="logout()">Chiqish</button>
@@ -268,6 +268,7 @@ a { color: inherit; text-decoration: none; }
     <button class="nav-tab active" data-page="dashboard">📊 Dashboard</button>
     <button class="nav-tab" data-page="animals">🐄 Mollar</button>
     <button class="nav-tab" data-page="milk">🥛 Sut</button>
+    <button class="nav-tab" data-page="milk-sales">🛒 Sut sotuvi</button>
     <button class="nav-tab admin-only" data-page="finance">💰 Moliya</button>
     <button class="nav-tab" data-page="expenses">📋 Harajatlar</button>
     <button class="nav-tab admin-only" data-page="admin">⚙️ Admin</button>
@@ -315,6 +316,28 @@ a { color: inherit; text-decoration: none; }
       <div class="card">
         <div class="card-title">So'nggi yozuvlar</div>
         <div id="milk-list"></div>
+      </div>
+    </section>
+
+    <!-- ─── Sut Sotuvi ───────────────────────────────────────────────── -->
+    <section class="page" id="page-milk-sales">
+      <div class="page-header">
+        <div class="page-title">Sut sotuvi</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-milk-sale')">+ Sotish</button>
+      </div>
+      <div id="milk-sales-today-cards" class="stat-grid" style="margin-bottom:16px">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d9488, #14b8a6); color: white;">
+          <div class="stat-label" style="color: rgba(255,255,255,0.9);">Bugun sotilgan sut</div>
+          <div class="stat-value" id="today-milk-sales-total" style="font-size: 24px; font-weight: 700;">0 litr</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;">
+          <div class="stat-label" style="color: rgba(255,255,255,0.9);">Bugun daromad</div>
+          <div class="stat-value" id="today-milk-sales-revenue" style="font-size: 24px; font-weight: 700;">0 so'm</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">So'nggi sotuvlar</div>
+        <div id="milk-sales-list"></div>
       </div>
     </section>
 
@@ -381,8 +404,6 @@ a { color: inherit; text-decoration: none; }
         <select id="a-type">
           <option value="sigir">Sigir</option>
           <option value="buqa">Buqa</option>
-          <option value="buzog">Buzog'</option>
-          <option value="qoracha">Qoracha</option>
         </select>
       </div>
       <div class="form-group">
@@ -390,8 +411,6 @@ a { color: inherit; text-decoration: none; }
         <select id="a-gender">
           <option value="female">Urg'ochi</option>
           <option value="male">Erkak</option>
-          <option value="bozak_male">Bozak (erkak)</option>
-          <option value="bogoz_female">Bog'oz (urg'ochi)</option>
         </select>
       </div>
     </div>
@@ -442,6 +461,54 @@ a { color: inherit; text-decoration: none; }
     </div>
     <div id="animal-detail-body"></div>
     <div class="modal-footer" id="animal-detail-footer"></div>
+  </div>
+</div>
+
+<!-- Milk Sale Modal -->
+<div class="modal-overlay" id="modal-milk-sale" style="display:none" onclick="bgClose(event,'modal-milk-sale')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Sut sotish</div>
+      <button class="modal-close" onclick="closeModal('modal-milk-sale')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Sana</label>
+        <input type="date" id="ms-date">
+      </div>
+      <div class="form-group">
+        <label>Miqdor (litr) *</label>
+        <input type="number" id="ms-liters" placeholder="0" step="0.5" min="0" oninput="calcMilkSaleTotal()">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Narx (so'm/litr) *</label>
+        <input type="number" id="ms-price" placeholder="3000" min="0" oninput="calcMilkSaleTotal()">
+      </div>
+      <div class="form-group">
+        <label>Jami summa</label>
+        <input type="text" id="ms-total" readonly style="background: var(--bg);" value="—">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Xaridor ismi *</label>
+        <input type="text" id="ms-buyer" placeholder="Xaridor ismi...">
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input type="text" id="ms-phone" placeholder="+998 XX XXX-XX-XX">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Izoh</label>
+      <textarea id="ms-notes" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-milk-sale')">Bekor</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitMilkSale()">Saqlash</button>
+    </div>
   </div>
 </div>
 
@@ -705,7 +772,7 @@ function showPage(page) {
   S.page = page;
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
-  const loaders = { dashboard: loadDashboard, animals: loadAnimals, milk: loadMilk, finance: loadFinance, expenses: loadExpenses, admin: loadAdmin };
+  const loaders = { dashboard: loadDashboard, animals: loadAnimals, milk: loadMilk, 'milk-sales': loadMilkSales, finance: loadFinance, expenses: loadExpenses, admin: loadAdmin };
   if (loaders[page]) loaders[page]();
 }
 
@@ -1000,8 +1067,8 @@ async function loadMilk() {
   document.getElementById('milk-list').innerHTML = allRecs.map(r => `
     <div class="list-item">
       <div class="list-item-left">
-        <div class="list-item-title">${fmtL(r.liters)} · ${r.buyer}</div>
-        <div class="list-item-sub">${fmtDate(r.date)} · ${r.session}-soqim · ${fmt(r.price_per_liter)} so'm/L</div>
+        <div class="list-item-title">${fmtL(r.liters)} litr</div>
+        <div class="list-item-sub">${fmtDate(r.date)} · ${r.session}-soqim · ${r.tag_number} ${r.name ? '· ' + r.name : ''}</div>
       </div>
       <div class="list-item-right">
         <div class="amount-green">${fmtSum(r.total)}</div>
@@ -1014,6 +1081,78 @@ function calcMilkTotal() {
   const L = parseFloat(document.getElementById('m-liters').value) || 0;
   const P = parseFloat(document.getElementById('m-price').value)  || 0;
   document.getElementById('m-total-show').textContent = L && P ? fmtSum(Math.round(L * P)) : '—';
+}
+
+function calcMilkSaleTotal() {
+  const L = parseFloat(document.getElementById('ms-liters').value) || 0;
+  const P = parseFloat(document.getElementById('ms-price').value)  || 0;
+  document.getElementById('ms-total').value = L && P ? Math.round(L * P) : '—';
+}
+
+async function loadMilkSales() {
+  const [todayRecs, allRecs] = await Promise.all([
+    GET('/milk-sales?date=' + today()),
+    GET('/milk-sales?limit=40')
+  ]);
+  if (!todayRecs || !allRecs) return;
+
+  const totalLiters = todayRecs.reduce((s, r) => s + r.liters, 0);
+  const totalRevenue = todayRecs.reduce((s, r) => s + r.total, 0);
+
+  // Bugungi sotuvlar kartalarini yangilash
+  document.getElementById('today-milk-sales-total').textContent = fmtL(totalLiters);
+  document.getElementById('today-milk-sales-revenue').textContent = fmtSum(totalRevenue);
+
+  if (allRecs.length === 0) {
+    document.getElementById('milk-sales-list').innerHTML = '<div class="empty"><div class="empty-icon">🛒</div><div>Hali sotuv yo\'q</div></div>';
+    return;
+  }
+
+  document.getElementById('milk-sales-list').innerHTML = allRecs.map(r => `
+    <div class="list-item">
+      <div class="list-item-left">
+        <div class="list-item-title">${fmtL(r.liters)} litr · ${r.buyer}</div>
+        <div class="list-item-sub">${fmtDate(r.date)} · ${fmt(r.price)} so'm/L ${r.phone ? '· ' + r.phone : ''}</div>
+      </div>
+      <div class="list-item-right">
+        <div class="amount-green">${fmtSum(r.total)}</div>
+        ${S.user.role === 'admin' ? `<button class="btn btn-sm" style="color:var(--red);background:none;border:none;padding:4px;margin-top:2px" onclick="deleteMilkSale('${r.id}')">🗑</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function submitMilkSale() {
+  const liters = parseFloat(document.getElementById('ms-liters').value);
+  const price  = parseFloat(document.getElementById('ms-price').value);
+  const buyer  = document.getElementById('ms-buyer').value.trim();
+  const phone  = document.getElementById('ms-phone').value.trim();
+  const notes  = document.getElementById('ms-notes').value.trim();
+  const date   = document.getElementById('ms-date').value || today();
+
+  if (!liters || !price || !buyer) { 
+    showToast('Miqdor, narx va xaridor ismini kiriting', 'error'); 
+    return; 
+  }
+
+  const res = await POST('/milk-sales', {
+    date, liters, price, buyer, phone, notes,
+    total: Math.round(liters * price)
+  });
+
+  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
+  showToast('Sotuv saqlandi', 'success');
+  closeModal('modal-milk-sale');
+  loadMilkSales();
+  if (S.page === 'dashboard') loadDashboard();
+}
+
+async function deleteMilkSale(id) {
+  if (!confirm("Sotuvni o'chirishni tasdiqlaysizmi?")) return;
+  const res = await DEL('/milk-sales/' + id);
+  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
+  showToast("Sotuv o'chirildi");
+  loadMilkSales();
+  if (S.page === 'dashboard') loadDashboard();
 }
 
 async function submitMilk() {
@@ -1276,10 +1415,14 @@ document.addEventListener('keydown', e => {
 document.getElementById('modal-milk').addEventListener('click', () => {
   if (!document.getElementById('m-date').value) document.getElementById('m-date').value = today();
 });
+document.getElementById('modal-milk-sale').addEventListener('click', () => {
+  if (!document.getElementById('ms-date').value) document.getElementById('ms-date').value = today();
+});
 document.getElementById('modal-expense').addEventListener('click', () => {
   if (!document.getElementById('e-date').value) document.getElementById('e-date').value = today();
 });
 ['m-liters','m-price'].forEach(id => document.getElementById(id).addEventListener('input', calcMilkTotal));
+['ms-liters','ms-price'].forEach(id => document.getElementById(id).addEventListener('input', calcMilkSaleTotal));
 
 // Init
 document.getElementById('m-date').value = today();
