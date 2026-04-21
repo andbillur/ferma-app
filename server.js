@@ -184,6 +184,12 @@ function dateStr(daysAgo = 0) {
 // API Routes
 const routes = {
   // Auth
+  'GET:/me': async (req, res) => {
+    const user = await auth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    json(res, { id: user.id, username: user.username, role: user.role, name: user.name });
+  },
+
   'POST:/login': async (req, res) => {
     const { username, password } = await parseBody(req);
     if (!username || !password) { return json(res, { error: 'Login va parol required' }, 400); }
@@ -423,8 +429,17 @@ const routes = {
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
     const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
-    await pool.query('DELETE FROM expenses WHERE id = $1', [id]);
-    json(res, { success: true });
+    if (!id) return json(res, { error: 'ID required' }, 400);
+    
+    try {
+      const result = await pool.query('DELETE FROM expenses WHERE id = $1 RETURNING *', [id]);
+      if (result.rows.length === 0) {
+        return json(res, { error: 'Harajat topilmadi' }, 404);
+      }
+      json(res, { success: true });
+    } catch (error) {
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
+    }
   },
 
   // Users (Admin)
@@ -441,6 +456,13 @@ const routes = {
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
     const data = await parseBody(req);
+    
+    // Avval username mavjudligini tekshiramiz
+    const existing = await pool.query('SELECT id, username FROM users WHERE username = $1', [data.username]);
+    if (existing.rows.length > 0) {
+      return json(res, { error: `"${data.username}" username allaqachon mavjud! Boshqa username kiriting.` }, 400);
+    }
+    
     const id = uuid();
     
     try {
@@ -452,7 +474,7 @@ const routes = {
       const result = await pool.query('SELECT id, username, role, name, created_at FROM users WHERE id = $1', [id]);
       json(res, result.rows[0]);
     } catch (error) {
-      json(res, { error: 'Username allaqachon mavjud' }, 400);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
     }
   },
 
