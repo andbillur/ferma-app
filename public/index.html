@@ -845,6 +845,7 @@ async function submitAnimal(){
     insemination_date:document.getElementById('a-insem').value||null,
     notes:document.getElementById('a-notes').value.trim(),
   };
+  console.log('submitAnimal:', { editId, body });
   const res=editId?await PUT('/animals/'+editId,body):await POST('/animals',body);
   if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
   showToast(editId?'Saqlandi':"Mol qo'shildi",'success');

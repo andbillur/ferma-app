@@ -260,11 +260,16 @@ const routes = {
     // Faqat boshqa molga tegishli bo'lsa tekshiramiz
     const current = await pool.query('SELECT tag_number FROM animals WHERE id=$1', [id]);
     const currentTag = current.rows[0]?.tag_number;
+    console.log('PUT animals current tag:', currentTag, 'new tag:', d.tag_number);
     
     // Agar quloq raqam o'zgarmagan bo'lsa, tekshirish shart emas
     if (currentTag !== d.tag_number) {
+      console.log('Tag changed, checking uniqueness...');
       const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
+      console.log('Uniqueness check result:', ex.rows);
       if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
+    } else {
+      console.log('Tag not changed, skipping uniqueness check');
     }
     try {
       await pool.query(`UPDATE animals SET tag_number=$1,name=$2,type=$3,gender=$4,status=$5,births=$6,daily_milk=$7,birth_date=$8,last_calving_date=$9,insemination_date=$10,notes=$11,updated_at=CURRENT_TIMESTAMP WHERE id=$12`,
