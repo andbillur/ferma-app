@@ -218,8 +218,13 @@ const routes = {
     const code = generateVerificationCode();
     passwordResetCodes.set(email, { code, expires: Date.now() + 15 * 60 * 1000 }); // 15 daqiqa
     
-    const emailSent = sendPasswordResetEmail(email, code, user.rows[0].name || user.rows[0].username);
-    if (!emailSent) return json(res, { error: 'Email yuborishda xatolik' }, 500);
+    try {
+      const emailSent = sendPasswordResetEmail(email, code, user.rows[0].name || user.rows[0].username);
+      if (!emailSent) return json(res, { error: 'Email yuborishda xatolik' }, 500);
+    } catch (error) {
+      console.error('Email yuborish xatosi:', error);
+      return json(res, { error: 'Email yuborishda xatolik: ' + error.message }, 500);
+    }
     
     json(res, { message: 'Tasdiqlash kodi emailingizga yuborildi' });
   },
