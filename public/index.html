@@ -215,8 +215,11 @@ a{color:inherit;text-decoration:none;}
   <div class="login-box">
     <div class="login-logo"><h1>🐄 FermaApp</h1><p>Ferma boshqaruv tizimi</p></div>
     <div class="form-group"><label>Login</label><input type="text" id="l-username" placeholder="Login" autocomplete="username"></div>
-    <div class="form-group"><label>Parol</label><input type="password" id="l-password" placeholder="••••••••" autocomplete="current-password"></div>
+    <div class="form-group"><label>Parol</label><input type="password" id="l-password" placeholder="•••••••" autocomplete="current-password"></div>
     <button class="btn btn-primary btn-block" onclick="login()">Kirish</button>
+    <div style="text-align:center; margin-top:12px;">
+      <a href="#" onclick="showPasswordReset()" style="color:var(--primary); text-decoration:none; font-size:13px;">Parolni unutdingizmi?</a>
+    </div>
     <div id="login-err" class="login-err"></div>
   </div>
 </div>
@@ -378,6 +381,24 @@ a{color:inherit;text-decoration:none;}
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-animal')">Bekor</button>
       <button class="btn btn-primary" style="flex:2" onclick="submitAnimal()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password Reset Modal -->
+<div class="modal-overlay" id="modal-password-reset" style="display:none" onclick="bgClose(event,'modal-password-reset')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Parolni tiklash</div>
+      <button class="modal-close" onclick="closeModal('modal-password-reset')">✕</button>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="reset-email" placeholder="info@andbillur.com"></div>
+    <div class="form-group"><label>Tasdiqlash kodi</label><input type="text" id="reset-code" placeholder="123456"></div>
+    <div class="form-group"><label>Yangi parol</label><input type="password" id="reset-password" placeholder="Yangi parol"></div>
+    <div class="form-group"><label>Parolni tasdiqlash</label><input type="password" id="reset-confirm" placeholder="Parolni qayta kiriting"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-password-reset')">Bekor</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitPasswordReset()">Parolni o'zgartirish</button>
     </div>
   </div>
 </div>
@@ -1230,6 +1251,66 @@ document.getElementById('milk-date').value=today();
 document.getElementById('e-date').value=today();
 document.getElementById('ms-date').value=today();
 initAuth();
+
+// Password reset functions
+function showPasswordReset() {
+  document.getElementById('login-screen').style.display = 'none';
+  openModal('modal-password-reset');
+}
+
+async function submitPasswordReset() {
+  const email = document.getElementById('reset-email').value.trim();
+  const code = document.getElementById('reset-code').value.trim();
+  const newPassword = document.getElementById('reset-password').value;
+  const confirmPassword = document.getElementById('reset-confirm').value;
+  
+  if (!email || !code || !newPassword || !confirmPassword) {
+    showToast('Barcha maydonlarni to\'ldiring', 'error');
+    return;
+  }
+  
+  if (newPassword !== confirmPassword) {
+    showToast('Parollar mos kelmadi', 'error');
+    return;
+  }
+  
+  if (newPassword.length < 6) {
+    showToast('Parol kamida 6 ta belgidan iborat bo\'lishi kerak', 'error');
+    return;
+  }
+  
+  const res = await POST('/password-reset-verify', { email, code, newPassword });
+  if (!res || res.error) {
+    showToast(res?.error || 'Xatolik', 'error');
+    return;
+  }
+  
+  showToast(res.message || 'Parol muvaffaqiyatli o\'zgartirildi', 'success');
+  closeModal('modal-password-reset');
+  showLogin();
+}
+
+async function requestPasswordReset() {
+  const email = document.getElementById('reset-email').value.trim();
+  
+  if (!email) {
+    showToast('Email manzilini kiriting', 'error');
+    return;
+  }
+  
+  if (!email.includes('@')) {
+    showToast('Noto\'g\'ri email formati', 'error');
+    return;
+  }
+  
+  const res = await POST('/password-reset-request', { email });
+  if (!res || res.error) {
+    showToast(res?.error || 'Xatolik', 'error');
+    return;
+  }
+  
+  showToast(res.message || 'Tasdiqlash kodi emailingizga yuborildi', 'success');
+}
 
 // Global login function for onclick
 window.login = async function() {

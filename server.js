@@ -112,6 +112,63 @@ function json(res, data, status = 200) {
   });
   res.end(JSON.stringify(data));
 }
+// Password reset verification system
+const passwordResetCodes = new Map();
+
+function generateVerificationCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function sendPasswordResetEmail(email, code, userName) {
+  // Email template for password reset
+  const emailTemplate = `Salom ${userName},
+
+Parolni o'zgartirish uchun quyidagi tasdiqlash kodini kiriting:
+
+🔐 KOD: ${code}
+
+⏳ Kod 15 daqiqa davomida amal qiladi.
+
+Agar bu siz bo'lmasangiz — e'tibor bermang.
+
+— AndBillur Ferma tizimi`;
+
+  // Bu yerda haqiqiy email service integratsiya qilinishi kerak
+  console.log(`Email yuborilmoqda ${email} ga:`, emailTemplate);
+  console.log(`Verification code: ${code}`);
+  
+  // Temporary: return true (haqiqiy email service qo'shilganda o'zgartiriladi)
+  return true;
+}
+
+function sendPasswordChangeConfirmation(email, userName, ipAddress, device) {
+  // Email template for password change confirmation
+  const emailTemplate = `Salom ${userName},
+
+Sizning ferma.andbillur.com hisobingiz uchun parol muvaffaqiyatli o'zgartirildi.
+
+Agar bu o'zgarishni siz bajargan bo'lsangiz, hech qanday qo'shimcha harakat talab qilinmaydi.
+
+Agar bu harakatni siz amalga oshirmagan bo'lsangiz, iltimos darhol quyidagi choralarni ko'ring:
+
+Parolingizni qayta tiklang
+Hisobingizga kirishni tekshiring
+Administrator bilan bog'laning
+
+📅 Sana: ${new Date().toLocaleString('uz-UZ')}
+🌐 IP manzil: ${ipAddress}
+📍 Qurilma: ${device}
+
+Xavfsizlik uchun hech qachon parolingizni boshqa birov bilan ulashmang.
+
+— AndBillur Ferma tizimi`;
+
+  console.log(`Password change confirmation email yuborilmoqda ${email} ga:`, emailTemplate);
+  
+  // Temporary: return true (haqiqiy email service qo'shilganda o'zgartiriladi)
+  return true;
+}
+
 function serveStatic(res, filePath) {
   const ext = path.extname(filePath);
   const types = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css' };
@@ -148,6 +205,48 @@ const routes = {
     if (token) delete sessions[token];
     res.setHeader('Set-Cookie', 'token=; Path=/; Max-Age=0');
     json(res, { success: true });
+  },
+
+  // PASSWORD RESET
+  'POST:/password-reset-request': async (req, res) => {
+    const { email } = await parseBody(req);
+    if (!email) return json(res, { error: 'Email kerak' }, 400);
+    
+    const user = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
+    if (!user.rows[0]) return json(res, { error: 'Bu email bilan foydalanuvchi topilmadi' }, 404);
+    
+    const code = generateVerificationCode();
+    passwordResetCodes.set(email, { code, expires: Date.now() + 15 * 60 * 1000 }); // 15 daqiqa
+    
+    const emailSent = sendPasswordResetEmail(email, code, user.rows[0].name || user.rows[0].username);
+    if (!emailSent) return json(res, { error: 'Email yuborishda xatolik' }, 500);
+    
+    json(res, { message: 'Tasdiqlash kodi emailingizga yuborildi' });
+  },
+
+  'POST:/password-reset-verify': async (req, res) => {
+    const { email, code, newPassword } = await parseBody(req);
+    if (!email || !code || !newPassword) {
+      return json(res, { error: 'Email, kod va yangi parol kerak' }, 400);
+    }
+    
+    const resetData = passwordResetCodes.get(email);
+    if (!resetData || resetData.code !== code || Date.now() > resetData.expires) {
+      return json(res, { error: 'Noto\'g\'ri yoki muddati o\'tgan kod' }, 400);
+    }
+    
+    const user = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
+    if (!user.rows[0]) return json(res, { error: 'Foydalanuvchi topilmadi' }, 404);
+    
+    await pool.query('UPDATE users SET password=$1 WHERE id=$2', [hashPassword(newPassword), user.rows[0].id]);
+    
+    // Confirmation email
+    sendPasswordChangeConfirmation(email, user.rows[0].name || user.rows[0].username, req.socket.remoteAddress, req.headers['user-agent'] || 'Noma\'lum');
+    
+    // Clean up
+    passwordResetCodes.delete(email);
+    
+    json(res, { message: 'Parol muvaffaqiyatli o\'zgartirildi' });
   },
 
   // STATS
