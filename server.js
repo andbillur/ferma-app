@@ -236,6 +236,13 @@ const routes = {
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
     const data = await parseBody(req);
+    
+    // Avval quloq raqami mavjudligini tekshiramiz
+    const existing = await pool.query('SELECT id, tag_number FROM animals WHERE tag_number = $1', [data.tag_number]);
+    if (existing.rows.length > 0) {
+      return json(res, { error: `"${data.tag_number}" quloq raqami allaqachon mavjud! Boshqa raqam kiriting.` }, 400);
+    }
+    
     const id = uuid();
     
     try {
@@ -248,7 +255,7 @@ const routes = {
       const result = await pool.query('SELECT * FROM animals WHERE id = $1', [id]);
       json(res, result.rows[0]);
     } catch (error) {
-      json(res, { error: 'Quloq raqami allaqachon mavjud' }, 400);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
     }
   },
 
@@ -258,6 +265,12 @@ const routes = {
     
     const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
     const data = await parseBody(req);
+    
+    // Avval quloq raqami boshqa hayvonda mavjudligini tekshiramiz
+    const existing = await pool.query('SELECT id, tag_number FROM animals WHERE tag_number = $1 AND id != $2', [data.tag_number, id]);
+    if (existing.rows.length > 0) {
+      return json(res, { error: `"${data.tag_number}" quloq raqami allaqachon mavjud! Boshqa raqam kiriting.` }, 400);
+    }
     
     try {
       await pool.query(`
@@ -270,7 +283,7 @@ const routes = {
       const result = await pool.query('SELECT * FROM animals WHERE id = $1', [id]);
       json(res, result.rows[0]);
     } catch (error) {
-      json(res, { error: 'Quloq raqami allaqachon mavjud' }, 400);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
     }
   },
 
@@ -310,12 +323,11 @@ const routes = {
     
     const data = await parseBody(req);
     const id = uuid();
-    const total = data.liters * data.price;
     
     await pool.query(`
-      INSERT INTO milk_records (id, animal_id, date, session, liters, price, total)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [id, data.animal_id, data.date, data.session, data.liters, data.price, total]);
+      INSERT INTO milk_records (id, date, session, liters)
+      VALUES ($1, $2, $3, $4)
+    `, [id, data.date, data.session, data.liters]);
     
     const result = await pool.query('SELECT * FROM milk_records WHERE id = $1', [id]);
     json(res, result.rows[0]);

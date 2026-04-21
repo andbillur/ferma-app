@@ -538,17 +538,11 @@ a { color: inherit; text-decoration: none; }
         <input type="number" id="m-liters" placeholder="0" step="0.5" min="0">
       </div>
       <div class="form-group">
-        <label>Narx (so'm/litr) *</label>
-        <input type="number" id="m-price" placeholder="3000" min="0" oninput="calcMilkTotal()">
+        <label>Mol (quloq raqami)</label>
+        <select id="m-animal">
+          <option value="">Molni tanlang...</option>
+        </select>
       </div>
-    </div>
-    <div class="form-group">
-      <label>Jami summa</label>
-      <div id="m-total-show" style="font-size:20px;font-weight:700;color:var(--green);padding:8px 0;">—</div>
-    </div>
-    <div class="form-group">
-      <label>Xaridor</label>
-      <input type="text" id="m-buyer" value="Nestle">
     </div>
     <div class="form-group">
       <label>Izoh</label>
@@ -997,11 +991,11 @@ async function submitAnimal() {
   if (!tag) { showToast('Quloq raqami kerak', 'error'); return; }
   const editId = document.getElementById('animal-edit-id').value;
   const body = {
-    tag, name: document.getElementById('a-name').value.trim(),
+    tag_number: tag, name: document.getElementById('a-name').value.trim(),
     type: document.getElementById('a-type').value,
     gender: document.getElementById('a-gender').value,
     status: document.getElementById('a-status').value,
-    birth_count: document.getElementById('a-births').value || 0,
+    births: document.getElementById('a-births').value || 0,
     daily_milk:  document.getElementById('a-milk').value  || 0,
     birth_date: document.getElementById('a-bdate').value,
     notes: document.getElementById('a-notes').value.trim(),
@@ -1037,7 +1031,6 @@ async function loadMilk() {
   const s1 = todayRecs.find(r => r.session === 1);
   const s2 = todayRecs.find(r => r.session === 2);
   const total = todayRecs.reduce((s, r) => s + r.liters, 0);
-  const totalRev = todayRecs.reduce((s, r) => s + r.total, 0);
 
   // Bugun qancha sut qo'shildi kartasini yangilash
   document.getElementById('today-milk-total').textContent = fmtL(total);
@@ -1046,17 +1039,14 @@ async function loadMilk() {
     <div class="stat-card teal">
       <div class="stat-label">Bugun jami</div>
       <div class="stat-val">${fmtL(total)}</div>
-      <div class="stat-sub">${fmtSum(totalRev)}</div>
     </div>
     <div class="stat-card ${s1 ? 'green' : 'amber'}">
       <div class="stat-label">1-soqim</div>
       <div class="stat-val">${s1 ? fmtL(s1.liters) : '—'}</div>
-      <div class="stat-sub">${s1 ? fmtSum(s1.total) : "Kiritilmagan"}</div>
     </div>
     <div class="stat-card ${s2 ? 'green' : 'amber'}">
       <div class="stat-label">2-soqim</div>
       <div class="stat-val">${s2 ? fmtL(s2.liters) : '—'}</div>
-      <div class="stat-sub">${s2 ? fmtSum(s2.total) : "Kiritilmagan"}</div>
     </div>`;
 
   if (allRecs.length === 0) {
@@ -1157,13 +1147,17 @@ async function deleteMilkSale(id) {
 
 async function submitMilk() {
   const liters = parseFloat(document.getElementById('m-liters').value);
-  const price  = parseFloat(document.getElementById('m-price').value);
-  if (!liters || !price) { showToast('Litr va narxni kiriting', 'error'); return; }
+  const animalId = document.getElementById('m-animal').value;
+  const session = document.getElementById('m-session').value;
+  
+  if (!liters) { showToast('Litr miqdorini kiriting', 'error'); return; }
+  if (!animalId) { showToast('Molni tanlang', 'error'); return; }
+  
   const res = await POST('/milk', {
     date: document.getElementById('m-date').value || today(),
-    session: document.getElementById('m-session').value,
-    liters, price_per_liter: price,
-    buyer: document.getElementById('m-buyer').value,
+    session: session,
+    animal_id: animalId,
+    liters: liters,
     notes: document.getElementById('m-notes').value,
   });
   if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
@@ -1412,8 +1406,16 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Modal default dates ───────────────────────────────────────────────────────
-document.getElementById('modal-milk').addEventListener('click', () => {
+document.getElementById('modal-milk').addEventListener('click', async () => {
   if (!document.getElementById('m-date').value) document.getElementById('m-date').value = today();
+  
+  // Mollarni selectiga yuklash
+  const animals = await GET('/animals');
+  if (animals) {
+    const select = document.getElementById('m-animal');
+    select.innerHTML = '<option value="">Molni tanlang...</option>' + 
+      animals.map(a => `<option value="${a.id}">${a.tag_number} ${a.name ? '· ' + a.name : ''}</option>`).join('');
+  }
 });
 document.getElementById('modal-milk-sale').addEventListener('click', () => {
   if (!document.getElementById('ms-date').value) document.getElementById('ms-date').value = today();
