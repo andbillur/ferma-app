@@ -393,9 +393,9 @@ a{color:inherit;text-decoration:none;}
       <button class="modal-close" onclick="closeModal('modal-password-reset')">✕</button>
     </div>
     
-    <!-- Email maydoni - avvaldan ko'rsatiladi -->
+    <!-- Username maydoni - avvaldan ko'rsatiladi -->
     <div id="reset-step-1">
-      <div class="form-group"><label>Email</label><input type="email" id="reset-email" placeholder="info@andbillur.com"></div>
+      <div class="form-group"><label>Username</label><input type="text" id="reset-email" placeholder="Username"></div>
       <div class="modal-footer">
         <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-password-reset')">Bekor</button>
         <button class="btn btn-primary" style="flex:2" onclick="requestPasswordReset()">Kod yuborish</button>
@@ -1272,12 +1272,12 @@ function showPasswordReset() {
 }
 
 async function submitPasswordReset() {
-  const email = document.getElementById('reset-email').value.trim();
+  const username = document.getElementById('reset-email').value.trim();
   const code = document.getElementById('reset-code').value.trim();
   const newPassword = document.getElementById('reset-password').value;
   const confirmPassword = document.getElementById('reset-confirm').value;
   
-  if (!email || !code || !newPassword || !confirmPassword) {
+  if (!username || !code || !newPassword || !confirmPassword) {
     showToast('Barcha maydonlarni to\'ldiring', 'error');
     return;
   }
@@ -1292,7 +1292,7 @@ async function submitPasswordReset() {
     return;
   }
   
-  const res = await POST('/password-reset-verify', { email, code, newPassword });
+  const res = await POST('/admin/password-reset-confirm', { username, code, newPassword });
   if (!res || res.error) {
     showToast(res?.error || 'Xatolik', 'error');
     return;
@@ -1304,25 +1304,25 @@ async function submitPasswordReset() {
 }
 
 async function requestPasswordReset() {
-  const email = document.getElementById('reset-email').value.trim();
+  const username = document.getElementById('reset-email').value.trim();
   
-  if (!email) {
-    showToast('Email manzilini kiriting', 'error');
+  if (!username) {
+    showToast('Username ni kiriting', 'error');
     return;
   }
   
-  if (!email.includes('@')) {
-    showToast('Noto\'g\'ri email formati', 'error');
+  if (username.trim().length < 2) {
+    showToast('Username kamida 2 ta belgidan iborat bo\'lishi kerak', 'error');
     return;
   }
   
-  const res = await POST('/password-reset-request', { email });
+  const res = await POST('/admin/password-reset-request', { username });
   if (!res || res.error) {
     showToast(res?.error || 'Xatolik', 'error');
     return;
   }
   
-  showToast(res.message || 'Tasdiqlash kodi emailingizga yuborildi', 'success');
+  showToast(res.message || 'Tasdiqlash kodi admin emailiga yuborildi', 'success');
   
   // Kod yuborilgandan keyin 2-qadamni ko'rsatish
   setTimeout(() => {
