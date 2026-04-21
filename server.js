@@ -116,7 +116,26 @@ function json(res, data, status = 200) {
 const passwordResetCodes = new Map();
 
 function generateVerificationCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomBytes(3).toString('hex').toUpperCase();
+}
+
+// Create password reset tokens table if not exists
+async function createPasswordResetTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id VARCHAR(36) PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        token VARCHAR(64) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(email)
+      )
+    `);
+    console.log('Password reset tokens table created or already exists');
+  } catch (error) {
+    console.error('Error creating password reset table:', error);
+  }
 }
 
 function sendPasswordResetEmail(email, code, userName) {
@@ -209,49 +228,111 @@ const routes = {
 
   // PASSWORD RESET
   'POST:/password-reset-request': async (req, res) => {
-    const { email } = await parseBody(req);
-    if (!email) return json(res, { error: 'Email kerak' }, 400);
-    
-    const user = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
-    if (!user.rows[0]) return json(res, { error: 'Bu email bilan foydalanuvchi topilmadi' }, 404);
-    
-    const code = generateVerificationCode();
-    passwordResetCodes.set(email, { code, expires: Date.now() + 15 * 60 * 1000 }); // 15 daqiqa
-    
     try {
-      const emailSent = sendPasswordResetEmail(email, code, user.rows[0].name || user.rows[0].username);
-      if (!emailSent) return json(res, { error: 'Email yuborishda xatolik' }, 500);
+      const { email } = await parseBody(req);
+      
+      // Validate email
+      if (!email) {
+        return json(res, { error: 'Email kerak' }, 400);
+      }
+      
+      if (!email.includes('@') || !email.includes('.')) {
+        return json(res, { error: 'Noto\'g\'ri email formati' }, 400);
+      }
+      
+      // Check if user exists
+      let user;
+      try {
+        const userResult = await pool.query('SELECT id, username, name, email FROM users WHERE email=$1', [email]);
+        user = userResult.rows[0];
+      } catch (dbError) {
+        console.error('Database query error:', dbError);
+        return json(res, { error: 'Database xatosi' }, 500);
+      }
+      
+      // Always return success for security (don't reveal if email exists)
+      const resetToken = generateVerificationCode();
+      const expiresAt = Date.now() + (15 * 60 * 1000); // 15 minutes
+      
+      // Store reset token in database (more secure than in-memory)
+      try {
+        await pool.query(
+          'INSERT INTO password_reset_tokens (id, email, token, expires_at, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO UPDATE SET token=$3, expires_at=$4, created_at=$5',
+          [uuid(), email, resetToken, new Date(expiresAt).toISOString(), new Date().toISOString()]
+        );
+      } catch (tokenError) {
+        console.error('Token storage error:', tokenError);
+        // Fallback to in-memory if database fails
+        passwordResetCodes.set(email, { code: resetToken, expires: expiresAt });
+      }
+      
+      // Send email
+      try {
+        const emailSent = sendPasswordResetEmail(email, resetToken, user?.name || user?.username || 'Foydalanuvchi');
+        if (!emailSent) {
+          console.error('Email sending failed');
+          return json(res, { error: 'Email yuborishda xatolik' }, 500);
+        }
+      } catch (emailError) {
+        console.error('Email service error:', emailError);
+        // Still return success for security
+      }
+      
+      // Always return success
+      json(res, { 
+        success: true, 
+        message: 'Agar bu email mavjud bo\'lsa, tasdiqlash kodi yuborildi. Aks holda, hech qanday harakat qilmang.' 
+      });
+      
     } catch (error) {
-      console.error('Email yuborish xatosi:', error);
-      return json(res, { error: 'Email yuborishda xatolik: ' + error.message }, 500);
+      console.error('Password reset request error:', error);
+      return json(res, { error: 'Server xatosi: ' + error.message }, 500);
     }
-    
-    json(res, { message: 'Tasdiqlash kodi emailingizga yuborildi' });
   },
 
   'POST:/password-reset-verify': async (req, res) => {
-    const { email, code, newPassword } = await parseBody(req);
-    if (!email || !code || !newPassword) {
-      return json(res, { error: 'Email, kod va yangi parol kerak' }, 400);
+    try {
+      const { email, code, newPassword } = await parseBody(req);
+      
+      // Validate inputs
+      if (!email || !code || !newPassword) {
+        return json(res, { error: 'Email, kod va yangi parol kerak' }, 400);
+      }
+      
+      if (newPassword.length < 6) {
+        return json(res, { error: 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak' }, 400);
+      }
+      
+      // Check token in database first
+      const tokenResult = await pool.query(
+        'SELECT token, expires_at FROM password_reset_tokens WHERE email=$1 AND token=$2 AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
+        [email, code]
+      );
+      
+      if (!tokenResult.rows[0]) {
+        return json(res, { error: 'Noto\'g\'ri yoki muddati o\'tgan kod' }, 400);
+      }
+      
+      // Update user password
+      const user = await pool.query('SELECT id, username, name FROM users WHERE email=$1', [email]);
+      if (!user.rows[0]) {
+        return json(res, { error: 'Foydalanuvchi topilmadi' }, 404);
+      }
+      
+      await pool.query('UPDATE users SET password=$1 WHERE id=$2', [hashPassword(newPassword), user.rows[0].id]);
+      
+      // Delete used token
+      await pool.query('DELETE FROM password_reset_tokens WHERE email=$1 AND token=$2', [email, code]);
+      
+      // Send confirmation email
+      sendPasswordChangeConfirmation(email, user.rows[0].name || user.rows[0].username, req.socket.remoteAddress, req.headers['user-agent'] || 'Noma\'lum');
+      
+      json(res, { message: 'Parol muvaffaqiyatli o\'zgartirildi' });
+      
+    } catch (error) {
+      console.error('Password reset verify error:', error);
+      return json(res, { error: 'Server xatosi: ' + error.message }, 500);
     }
-    
-    const resetData = passwordResetCodes.get(email);
-    if (!resetData || resetData.code !== code || Date.now() > resetData.expires) {
-      return json(res, { error: 'Noto\'g\'ri yoki muddati o\'tgan kod' }, 400);
-    }
-    
-    const user = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
-    if (!user.rows[0]) return json(res, { error: 'Foydalanuvchi topilmadi' }, 404);
-    
-    await pool.query('UPDATE users SET password=$1 WHERE id=$2', [hashPassword(newPassword), user.rows[0].id]);
-    
-    // Confirmation email
-    sendPasswordChangeConfirmation(email, user.rows[0].name || user.rows[0].username, req.socket.remoteAddress, req.headers['user-agent'] || 'Noma\'lum');
-    
-    // Clean up
-    passwordResetCodes.delete(email);
-    
-    json(res, { message: 'Parol muvaffaqiyatli o\'zgartirildi' });
   },
 
   // STATS
@@ -664,6 +745,8 @@ const server = http.createServer(async (req, res) => {
   else serveStatic(res,path.join(PUBLIC_DIR,pathname));
 });
 
-initDB().then(()=>{
+initDB().then(async ()=>{
+  // Create password reset tokens table
+  await createPasswordResetTable();
   server.listen(PORT,'0.0.0.0',()=>console.log(`FermaApp running on port ${PORT}`));
 }).catch(e=>{console.error('Failed to start:',e);process.exit(1);});
