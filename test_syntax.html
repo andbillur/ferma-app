@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Syntax Test</title>
+</head>
+<body>
+    <script>
+        // Test basic JavaScript syntax
+        console.log('Testing syntax...');
+        
+        // Test the login function syntax
+        window.login = async function() {
+          try {
+            const username = document.getElementById('l-username').value.trim();
+            const password = document.getElementById('l-password').value;
+            const errEl = document.getElementById('login-err');
+            
+            if (errEl) errEl.textContent = '';
+            
+            if (!username || !password) { 
+              if (errEl) errEl.textContent = 'Login va parolni kiriting'; 
+              return; 
+            }
+            
+            // Mock POST function for testing
+            const data = await new Promise(resolve => ({ token: 'test', user: { id: 1, username: 'test' } }));
+            
+            if (!data || data.error) { 
+              if (errEl) errEl.textContent = data?.error || 'Xatolik'; 
+              return; 
+            }
+            
+            console.log('Login function syntax is OK');
+          } catch (error) {
+            console.error('Login function error:', error);
+          }
+        };
+        
+        console.log('Syntax test completed');
+    </script>
+</body>
+</html>
