@@ -253,7 +253,9 @@ const routes = {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     const id = pathId(req.url, 2);
+    if (!id) return json(res, { error: 'Animal ID kerak' }, 400);
     const d = await parseBody(req);
+    if (!d.tag_number) return json(res, { error: 'Quloq raqami kerak' }, 400);
     const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
     if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
     try {
@@ -324,7 +326,7 @@ const routes = {
         COALESCE(SUM(mr.liters), 0) AS total
       FROM animals a
       LEFT JOIN milk_records mr ON a.id=mr.animal_id AND mr.date=$1
-      WHERE a.status != 'sotildi'
+      WHERE a.status NOT IN ('sotildi','nobud')
       GROUP BY a.id, a.tag_number, a.name, a.status, a.daily_milk
       ORDER BY (a.status='sut_beradi') DESC, a.tag_number`,
       [date]
@@ -469,9 +471,10 @@ const routes = {
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     const d = await parseBody(req);
     const id=uuid();
+  const newStatus = (d.reason==='nobud') ? 'nobud' : 'sotildi';
     await pool.query(`INSERT INTO animal_sales (id,animal_id,price,buyer_name,reason,weight_kg,date,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [id,d.animal_id,d.price||0,d.buyer||null,d.reason||'sotish',d.weight_kg||null,d.date,d.notes||null]);
-    await pool.query(`UPDATE animals SET status='sotildi', updated_at=CURRENT_TIMESTAMP WHERE id=$1`,[d.animal_id]);
+    await pool.query(`UPDATE animals SET status=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2`,[newStatus,d.animal_id]);
     json(res,{success:true});
   },
 };
