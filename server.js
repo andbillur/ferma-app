@@ -543,8 +543,30 @@ const routes = {
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
     const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
-    await pool.query('DELETE FROM users WHERE id = $1', [id]);
-    json(res, { success: true });
+    console.log('DELETE user request:', { id, requestedBy: user.username });
+    
+    if (!id) {
+      return json(res, { error: 'User ID required' }, 400);
+    }
+    
+    // Prevent deleting current logged-in user
+    if (id === user.id) {
+      return json(res, { error: 'O\'z o\'zingizni o\'chira olmaysiz' }, 400);
+    }
+    
+    try {
+      const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+      
+      if (result.rows.length === 0) {
+        return json(res, { error: 'User not found' }, 404);
+      }
+      
+      console.log('User deleted successfully:', { id, username: result.rows[0].username });
+      json(res, { success: true, deletedUser: result.rows[0] });
+    } catch (error) {
+      console.error('Delete user error:', error);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
+    }
   },
 
   'POST:/logout': async (req, res) => {
