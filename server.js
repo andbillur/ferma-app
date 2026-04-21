@@ -257,9 +257,17 @@ const routes = {
     const d = await parseBody(req);
     console.log('PUT /animals/:id data:', { id, data: d });
     if (!d.tag_number) return json(res, { error: 'Quloq raqami kerak' }, 400);
+    
+    // First check if animal exists
+    const existing = await pool.query('SELECT * FROM animals WHERE id=$1', [id]);
+    if (existing.rows.length === 0) {
+      return json(res, { error: 'Bu ID li mol topilmadi' }, 404);
+    }
+    
+    console.log('Animal exists:', existing.rows[0].tag_number);
+    
     // Faqat boshqa molga tegishli bo'lsa tekshiramiz
-    const current = await pool.query('SELECT tag_number FROM animals WHERE id=$1', [id]);
-    const currentTag = current.rows[0]?.tag_number;
+    const currentTag = existing.rows[0]?.tag_number;
     console.log('PUT animals current tag:', currentTag, 'new tag:', d.tag_number);
     
     // Agar quloq raqam o'zgarmagan bo'lsa, tekshirish shart emas
