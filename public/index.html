@@ -6,291 +6,257 @@
 <title>FermaApp 🐄</title>
 <style>
 :root {
-  --p: #2a7d1f; --pd: #1a5c12; --pl: #e8f5e3; --ps: #c6ebbf;
-  --bg: #f3f7f0; --card: #fff; --border: #dde8d8;
-  --text: #1c2e18; --muted: #6b7c65; --light: #9db896;
-  --red: #dc2626; --amber: #d97706; --blue: #2563eb; --gray: #9ca3af;
-  --green: #16a34a; --teal: #0d9488;
-  --r: 10px; --r-sm: 6px;
-  --shadow: 0 1px 4px rgba(0,0,0,0.07);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --p:#2a7d1f;--pd:#1a5c12;--pl:#e8f5e3;--ps:#c6ebbf;
+  --bg:#f3f7f0;--card:#fff;--border:#dde8d8;
+  --text:#1c2e18;--muted:#6b7c65;--light:#9db896;
+  --red:#dc2626;--amber:#d97706;--blue:#2563eb;--gray:#9ca3af;
+  --green:#16a34a;--teal:#0d9488;--purple:#7c3aed;
+  --r:10px;--r-sm:6px;
+  --shadow:0 1px 4px rgba(0,0,0,0.07);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.10);
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
-button { cursor: pointer; border: none; font-family: inherit; font-size: 14px; }
-input, select, textarea { font-family: inherit; font-size: 14px; }
-a { color: inherit; text-decoration: none; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+button{cursor:pointer;border:none;font-family:inherit;font-size:14px;}
+input,select,textarea{font-family:inherit;font-size:14px;}
+a{color:inherit;text-decoration:none;}
 
-/* ── Login ─────────────────────────────────────────────────────────── */
-#login-screen {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #1a5c12 0%, #2a7d1f 50%, #3da32e 100%);
-}
-.login-box {
-  background: var(--card); border-radius: 16px; padding: 36px 32px;
-  width: 100%; max-width: 380px; box-shadow: var(--shadow-md);
-}
-.login-logo { text-align: center; margin-bottom: 24px; }
-.login-logo h1 { font-size: 26px; font-weight: 700; color: var(--p); }
-.login-logo p { color: var(--muted); font-size: 13px; margin-top: 4px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
-.form-group input, .form-group select, .form-group textarea {
-  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
-  border-radius: var(--r-sm); outline: none; transition: border-color .2s;
-  background: var(--bg);
-}
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--p); background: #fff; }
-.form-group textarea { resize: vertical; min-height: 70px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px; border-radius: var(--r-sm); font-weight: 500; transition: all .15s; }
-.btn-primary { background: var(--p); color: #fff; }
-.btn-primary:hover { background: var(--pd); }
-.btn-block { width: 100%; }
-.btn-sm { padding: 6px 12px; font-size: 13px; }
-.btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
-.btn-ghost:hover { background: var(--bg); color: var(--text); }
-.btn-danger { background: var(--red); color: #fff; }
-.btn-danger:hover { background: #b91c1c; }
-.btn-teal { background: var(--teal); color: #fff; }
-.btn-amber { background: var(--amber); color: #fff; }
-.login-err { color: var(--red); font-size: 13px; margin-top: 8px; text-align: center; }
+/* ── Login ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a5c12 0%,#2a7d1f 50%,#3da32e 100%);}
+.login-box{background:var(--card);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow-md);}
+.login-logo{text-align:center;margin-bottom:24px;}
+.login-logo h1{font-size:26px;font-weight:700;color:var(--p);}
+.login-logo p{color:var(--muted);font-size:13px;margin-top:4px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);outline:none;transition:border-color .2s;background:var(--bg);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--p);background:#fff;}
+.form-group textarea{resize:vertical;min-height:70px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--r-sm);font-weight:500;transition:all .15s;}
+.btn-primary{background:var(--p);color:#fff;}
+.btn-primary:hover{background:var(--pd);}
+.btn-block{width:100%;}
+.btn-sm{padding:6px 12px;font-size:13px;}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
+.btn-ghost:hover{background:var(--bg);color:var(--text);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{background:#b91c1c;}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-amber{background:var(--amber);color:#fff;}
+.login-err{color:var(--red);font-size:13px;margin-top:8px;text-align:center;}
 
-/* ── App Shell ─────────────────────────────────────────────────────── */
-#app { display: none; flex-direction: column; min-height: 100vh; }
-.topbar {
-  background: var(--p); color: #fff; padding: 0 16px; height: 54px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-.topbar-logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-.topbar-logo span { opacity: .7; font-weight: 400; font-size: 13px; margin-left: 8px; }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
-.user-chip { font-size: 12px; opacity: .85; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; }
-.logout-btn { background: rgba(255,255,255,0.15); color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 13px; border: none; }
-.logout-btn:hover { background: rgba(255,255,255,0.25); }
+/* ── App Shell ── */
+#app{display:none;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--p);color:#fff;padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,0.15);}
+.topbar-logo{font-size:18px;font-weight:700;letter-spacing:-0.3px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.user-chip{font-size:12px;opacity:.85;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px;}
+.logout-btn{background:rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:20px;font-size:13px;}
+.logout-btn:hover{background:rgba(255,255,255,0.25);}
 
-/* ── Nav Tabs ──────────────────────────────────────────────────────── */
-.nav-tabs {
-  background: var(--card); border-bottom: 2px solid var(--border);
-  display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; padding: 0 12px;
-  position: sticky; top: 54px; z-index: 99;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-.nav-tabs::-webkit-scrollbar { display: none; }
-.nav-tab {
-  flex: 0 0 auto; padding: 0 20px; height: 56px; border: none; background: transparent;
-  font-size: 16px; font-weight: 600; color: var(--muted); white-space: nowrap;
-  border-bottom: 4px solid transparent; transition: all .2s; position: relative; top: 2px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 8px 8px 0 0; margin: 4px 2px 0;
-}
-.nav-tab.active { 
-  color: var(--p); 
-  border-bottom-color: var(--p); 
-  background: linear-gradient(to bottom, rgba(42, 125, 31, 0.05), transparent);
-}
-.nav-tab:hover { 
-  color: var(--p); 
-  background: linear-gradient(to bottom, rgba(42, 125, 31, 0.03), transparent);
-}
-.nav-tab.admin-only { display: none; }
+/* ── Nav ── */
+.nav-tabs{background:var(--card);border-bottom:2px solid var(--border);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 12px;position:sticky;top:54px;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.nav-tabs::-webkit-scrollbar{display:none;}
+.nav-tab{flex:0 0 auto;padding:0 20px;height:56px;border:none;background:transparent;font-size:16px;font-weight:600;color:var(--muted);white-space:nowrap;border-bottom:4px solid transparent;transition:all .2s;position:relative;top:2px;display:flex;align-items:center;justify-content:center;border-radius:8px 8px 0 0;margin:4px 2px 0;}
+.nav-tab.active{color:var(--p);border-bottom-color:var(--p);background:linear-gradient(to bottom,rgba(42,125,31,0.05),transparent);}
+.nav-tab:hover{color:var(--p);}
+.nav-tab.admin-only{display:none;}
 
-/* ── Pages ─────────────────────────────────────────────────────────── */
-.page { display: none; padding: 16px; max-width: 900px; margin: 0 auto; width: 100%; }
-.page.active { display: block; }
+/* ── Pages ── */
+.page{display:none;padding:16px;max-width:960px;margin:0 auto;width:100%;}
+.page.active{display:block;}
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow);}
+.card-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:14px 16px;box-shadow:var(--shadow);}
+.stat-card .stat-label{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:6px;}
+.stat-card .stat-val{font-size:24px;font-weight:700;color:var(--text);line-height:1;}
+.stat-card .stat-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.stat-card.green{border-left:4px solid var(--green);}
+.stat-card.amber{border-left:4px solid var(--amber);}
+.stat-card.red{border-left:4px solid var(--red);}
+.stat-card.blue{border-left:4px solid var(--blue);}
+.stat-card.teal{border-left:4px solid var(--teal);}
+.stat-card.purple{border-left:4px solid var(--purple);}
 
-/* ── Cards ─────────────────────────────────────────────────────────── */
-.card { background: var(--card); border-radius: var(--r); border: 1px solid var(--border); padding: 16px; box-shadow: var(--shadow); }
-.card-title { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .5px; }
+/* ── Chart ── */
+.chart-wrap{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:16px;margin-bottom:16px;box-shadow:var(--shadow);}
+.chart-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;}
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:110px;padding-bottom:22px;position:relative;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%;}
+.bar-inner{width:100%;min-height:4px;border-radius:3px 3px 0 0;background:var(--p);opacity:.8;transition:height .4s;}
+.bar-inner.zero{background:var(--border);}
+.bar-lbl{font-size:10px;color:var(--muted);white-space:nowrap;}
+.bar-val-top{font-size:9px;color:var(--p);font-weight:600;}
 
-/* ── Stat Grid ─────────────────────────────────────────────────────── */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.stat-card { background: var(--card); border-radius: var(--r); border: 1px solid var(--border); padding: 14px 16px; box-shadow: var(--shadow); }
-.stat-card .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
-.stat-card .stat-val { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; }
-.stat-card .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
-.stat-card.green  { border-left: 4px solid var(--green); }
-.stat-card.amber  { border-left: 4px solid var(--amber); }
-.stat-card.red    { border-left: 4px solid var(--red); }
-.stat-card.blue   { border-left: 4px solid var(--blue); }
-.stat-card.teal   { border-left: 4px solid var(--teal); }
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:12px;font-weight:500;}
+.badge-green{background:#dcfce7;color:#15803d;}
+.badge-amber{background:#fef3c7;color:#92400e;}
+.badge-red{background:#fee2e2;color:#991b1b;}
+.badge-blue{background:#dbeafe;color:#1e40af;}
+.badge-gray{background:#f3f4f6;color:#6b7280;}
+.badge-teal{background:#ccfbf1;color:#0f766e;}
+.badge-purple{background:#ede9fe;color:#5b21b6;}
 
-/* ── Chart ─────────────────────────────────────────────────────────── */
-.chart-wrap { background: var(--card); border-radius: var(--r); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow); }
-.chart-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 12px; }
-.bar-chart { display: flex; align-items: flex-end; gap: 5px; height: 110px; padding-bottom: 22px; position: relative; }
-.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; height: 100%; }
-.bar-inner { width: 100%; min-height: 4px; border-radius: 3px 3px 0 0; background: var(--p); opacity: .8; transition: height .4s; }
-.bar-inner.zero { background: var(--border); }
-.bar-lbl { font-size: 10px; color: var(--muted); white-space: nowrap; }
-.bar-val-top { font-size: 9px; color: var(--p); font-weight: 600; }
+/* ── Animals ── */
+.animals-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.search-input{flex:1;min-width:180px;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);outline:none;}
+.search-input:focus{border-color:var(--p);}
+.filter-select{padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--card);outline:none;}
+.filter-select:focus{border-color:var(--p);}
+.animal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.animal-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:14px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);}
+.animal-card:hover{border-color:var(--p);box-shadow:0 2px 10px rgba(42,125,31,.12);transform:translateY(-1px);}
+.animal-tag{font-size:18px;font-weight:700;color:var(--p);margin-bottom:4px;}
+.animal-name{font-size:13px;color:var(--muted);margin-bottom:8px;}
+.animal-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.animal-info{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:var(--muted);}
+.milk-amount{font-weight:600;color:var(--teal);font-size:13px;}
+.count-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.count-chip{padding:5px 12px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .15s;}
+.count-chip.active{border-color:var(--p);}
 
-/* ── Status Badges ─────────────────────────────────────────────────── */
-.badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-.badge-green  { background: #dcfce7; color: #15803d; }
-.badge-amber  { background: #fef3c7; color: #92400e; }
-.badge-red    { background: #fee2e2; color: #991b1b; }
-.badge-blue   { background: #dbeafe; color: #1e40af; }
-.badge-gray   { background: #f3f4f6; color: #6b7280; }
-.badge-teal   { background: #ccfbf1; color: #0f766e; }
+/* ── Milk Table ── */
+.milk-date-nav{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.milk-date-nav button{width:34px;height:34px;border-radius:8px;background:var(--card);border:1.5px solid var(--border);font-size:18px;display:flex;align-items:center;justify-content:center;}
+.milk-date-nav button:hover{border-color:var(--p);color:var(--p);}
+.milk-date-nav input{padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);outline:none;background:var(--card);}
+.milk-date-nav input:focus{border-color:var(--p);}
+.milk-table{width:100%;border-collapse:collapse;}
+.milk-table th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:2px solid var(--border);background:var(--bg);}
+.milk-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle;}
+.milk-table tr:last-child td{border-bottom:none;}
+.milk-table tr:hover td{background:#f9fbf8;}
+.session-cell{display:flex;align-items:center;gap:6px;}
+.session-val{font-weight:600;color:var(--text);}
+.session-empty{color:var(--muted);font-size:13px;}
+.add-session-btn{width:24px;height:24px;border-radius:50%;background:var(--pl);color:var(--p);font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.add-session-btn:hover{background:var(--ps);}
+.del-session-btn{width:20px;height:20px;border-radius:50%;background:#fee2e2;color:var(--red);font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.del-session-btn:hover{background:#fca5a5;}
+.milk-total-row td{font-weight:700;background:var(--pl);border-radius:0 0 var(--r) var(--r);}
+.table-wrap{overflow-x:auto;}
 
-/* ── Animal Cards ──────────────────────────────────────────────────── */
-.animals-toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
-.search-input { flex: 1; min-width: 180px; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm); outline: none; }
-.search-input:focus { border-color: var(--p); }
-.filter-select { padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--card); outline: none; }
-.filter-select:focus { border-color: var(--p); }
-.animal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.animal-card {
-  background: var(--card); border-radius: var(--r); border: 1px solid var(--border);
-  padding: 14px; cursor: pointer; transition: all .15s; box-shadow: var(--shadow);
-}
-.animal-card:hover { border-color: var(--p); box-shadow: 0 2px 10px rgba(42,125,31,.12); transform: translateY(-1px); }
-.animal-tag { font-size: 18px; font-weight: 700; color: var(--p); margin-bottom: 4px; }
-.animal-name { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-.animal-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.animal-info { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: var(--muted); }
-.milk-amount { font-weight: 600; color: var(--teal); font-size: 13px; }
+/* ── List Items ── */
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:8px;box-shadow:var(--shadow);}
+.list-item:last-child{margin-bottom:0;}
+.list-item-left{flex:1;}
+.list-item-title{font-weight:600;font-size:15px;}
+.list-item-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.list-item-right{text-align:right;flex-shrink:0;margin-left:12px;}
+.amount-green{font-weight:700;color:var(--green);font-size:15px;}
+.amount-red{font-weight:700;color:var(--red);font-size:15px;}
 
-/* ── Animal Count Bar ──────────────────────────────────────────────── */
-.count-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.count-chip { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid transparent; transition: all .15s; }
-.count-chip.active { border-color: var(--p); }
+/* ── Page Header ── */
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.page-title{font-size:18px;font-weight:700;}
 
-/* ── List items ─────────────────────────────────────────────────────── */
-.list-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; background: var(--card); border-radius: var(--r-sm);
-  border: 1px solid var(--border); margin-bottom: 8px; box-shadow: var(--shadow);
-}
-.list-item:last-child { margin-bottom: 0; }
-.list-item-left { flex: 1; }
-.list-item-title { font-weight: 600; font-size: 15px; }
-.list-item-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.list-item-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
-.amount-green { font-weight: 700; color: var(--green); font-size: 15px; }
-.amount-red { font-weight: 700; color: var(--red); font-size: 15px; }
+/* ── Modals ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+@media(min-width:600px){.modal-overlay{align-items:center;}}
+.modal{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:20px;box-shadow:0 -4px 24px rgba(0,0,0,0.12);}
+@media(min-width:600px){.modal{border-radius:16px;}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.modal-title{font-size:17px;font-weight:700;}
+.modal-close{background:var(--bg);border:none;width:30px;height:30px;border-radius:50%;font-size:18px;color:var(--muted);cursor:pointer;}
+.modal-footer{display:flex;gap:10px;margin-top:20px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-hint{font-size:11px;color:var(--muted);margin-top:4px;}
 
-/* ── Page Header ────────────────────────────────────────────────────── */
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
-.page-title { font-size: 18px; font-weight: 700; }
+/* ── Finance ── */
+.period-tabs{display:flex;gap:6px;margin-bottom:16px;}
+.period-tab{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;background:var(--card);border:1.5px solid var(--border);color:var(--muted);}
+.period-tab.active{background:var(--p);color:#fff;border-color:var(--p);}
+.period-tab:hover:not(.active){border-color:var(--p);color:var(--p);}
+.cat-bar-wrap{margin-top:10px;}
+.cat-bar-row{margin-bottom:10px;}
+.cat-bar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
+.cat-bar-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.cat-bar-fill{height:100%;background:var(--amber);border-radius:4px;transition:width .4s;}
 
-/* ── Modal ──────────────────────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200;
-  display: flex; align-items: flex-end; justify-content: center;
-}
-@media (min-width: 600px) { .modal-overlay { align-items: center; } }
-.modal {
-  background: var(--card); border-radius: 16px 16px 0 0; width: 100%; max-width: 500px;
-  max-height: 90vh; overflow-y: auto; padding: 20px;
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
-}
-@media (min-width: 600px) { .modal { border-radius: 16px; } }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.modal-title { font-size: 17px; font-weight: 700; }
-.modal-close { background: var(--bg); border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; color: var(--muted); cursor: pointer; }
-.modal-footer { display: flex; gap: 10px; margin-top: 20px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.form-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+/* ── Animal Detail Tabs ── */
+.detail-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border);}
+.detail-tab{padding:8px 16px;font-size:14px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;transition:all .15s;}
+.detail-tab.active{color:var(--p);border-bottom-color:var(--p);}
+.detail-panel{display:none;}
+.detail-panel.active{display:block;}
 
-/* ── Finance Tabs ───────────────────────────────────────────────────── */
-.period-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
-.period-tab { padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; background: var(--card); border: 1.5px solid var(--border); color: var(--muted); }
-.period-tab.active { background: var(--p); color: #fff; border-color: var(--p); }
-.period-tab:hover:not(.active) { border-color: var(--p); color: var(--p); }
+/* ── Mini Graph ── */
+.mini-graph{display:flex;align-items:flex-end;gap:3px;height:80px;padding-bottom:18px;}
+.mini-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;height:100%;}
+.mini-bar-fill{width:100%;min-height:2px;border-radius:2px 2px 0 0;background:var(--p);opacity:.75;}
+.mini-bar-fill.zero{background:var(--border);}
+.mini-bar-lbl{font-size:9px;color:var(--muted);white-space:nowrap;}
 
-/* ── Expense category bars ──────────────────────────────────────────── */
-.cat-bar-wrap { margin-top: 10px; }
-.cat-bar-row { margin-bottom: 10px; }
-.cat-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
-.cat-bar-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-.cat-bar-fill { height: 100%; background: var(--amber); border-radius: 4px; transition: width .4s; }
+/* ── Toast ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:#1c2e18;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;z-index:999;opacity:0;transition:all .3s;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.error{background:var(--red);}
+#toast.success{background:var(--green);}
 
-/* ── Toast ──────────────────────────────────────────────────────────── */
-#toast {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(60px);
-  background: #1c2e18; color: #fff; padding: 10px 20px; border-radius: 8px;
-  font-size: 14px; z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-#toast.error { background: var(--red); }
-#toast.success { background: var(--green); }
-
-/* ── Misc ───────────────────────────────────────────────────────────── */
-.empty { text-align: center; padding: 48px 16px; color: var(--muted); }
-.empty-icon { font-size: 40px; margin-bottom: 8px; }
-.divider { height: 1px; background: var(--border); margin: 12px 0; }
-.section-gap { height: 16px; }
-.loading { text-align: center; padding: 32px; color: var(--muted); font-size: 14px; }
-.flex-between { display: flex; justify-content: space-between; align-items: center; }
-.text-muted { color: var(--muted); font-size: 13px; }
-.text-green { color: var(--green); }
-.text-red { color: var(--red); }
-.text-bold { font-weight: 700; }
+/* ── Misc ── */
+.empty{text-align:center;padding:48px 16px;color:var(--muted);}
+.empty-icon{font-size:40px;margin-bottom:8px;}
+.loading{text-align:center;padding:32px;color:var(--muted);font-size:14px;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;}
+.text-muted{color:var(--muted);font-size:13px;}
+.text-green{color:var(--green);}
+.text-red{color:var(--red);}
+.text-bold{font-weight:700;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.section-gap{height:16px;}
 </style>
 </head>
 <body>
 
-<!-- ─── Login ─────────────────────────────────────────────────────────────── -->
+<!-- Login -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-logo">
-      <h1>🐄 FermaApp</h1>
-      <p>Ferma boshqaruv tizimi</p>
-    </div>
-    <div class="form-group">
-      <label>Login</label>
-      <input type="text" id="l-username" placeholder="admin" autocomplete="username">
-    </div>
-    <div class="form-group">
-      <label>Parol</label>
-      <input type="password" id="l-password" placeholder="••••••••" autocomplete="current-password">
-    </div>
+    <div class="login-logo"><h1>🐄 FermaApp</h1><p>Ferma boshqaruv tizimi</p></div>
+    <div class="form-group"><label>Login</label><input type="text" id="l-username" placeholder="admin" autocomplete="username"></div>
+    <div class="form-group"><label>Parol</label><input type="password" id="l-password" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn btn-primary btn-block" onclick="login()">Kirish</button>
     <div id="login-err" class="login-err"></div>
   </div>
 </div>
 
-<!-- ─── App ───────────────────────────────────────────────────────────────── -->
+<!-- App -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-logo">🐄 FermaApp <span id="topbar-farm">Obod Diyor Niholi</span></div>
+    <div class="topbar-logo">🐄 FermaApp</div>
     <div class="topbar-right">
       <span class="user-chip" id="user-chip">Admin</span>
       <button class="logout-btn" onclick="logout()">Chiqish</button>
     </div>
   </div>
-
   <nav class="nav-tabs">
     <button class="nav-tab active" data-page="dashboard">📊 Dashboard</button>
     <button class="nav-tab" data-page="animals">🐄 Mollar</button>
     <button class="nav-tab" data-page="milk">🥛 Sut</button>
-    <button class="nav-tab" data-page="milk-sales">🛒 Sut sotuvi</button>
+    <button class="nav-tab" data-page="milk-sales">🛒 Sotuv</button>
     <button class="nav-tab admin-only" data-page="finance">💰 Moliya</button>
-    <button class="nav-tab" data-page="expenses">📋 Harajatlar</button>
+    <button class="nav-tab" data-page="expenses">📋 Harajat</button>
     <button class="nav-tab admin-only" data-page="admin">⚙️ Admin</button>
   </nav>
-
   <main>
-    <!-- ─── Dashboard ──────────────────────────────────────────────── -->
+    <!-- Dashboard -->
     <section class="page active" id="page-dashboard">
       <div id="dashboard-content"><div class="loading">Yuklanmoqda...</div></div>
     </section>
 
-    <!-- ─── Mollar ─────────────────────────────────────────────────── -->
+    <!-- Mollar -->
     <section class="page" id="page-animals">
       <div class="page-header">
         <div class="page-title">Mollar</div>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-animal')">+ Mol qo'shish</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddAnimalModal()">+ Mol qo'shish</button>
       </div>
       <div class="animals-toolbar">
         <input class="search-input" id="animal-search" placeholder="Quloq raqami yoki ism..." oninput="filterAnimals()">
         <select class="filter-select" id="animal-status-filter" onchange="filterAnimals()">
           <option value="all">Barchasi</option>
           <option value="sut_beradi">Sut beradi</option>
+          <option value="bogoz">Bog'oz</option>
           <option value="vaqtincha">Vaqtincha yo'q</option>
           <option value="kasal">Kasal</option>
           <option value="bozak">Bozak</option>
@@ -301,51 +267,41 @@ a { color: inherit; text-decoration: none; }
       <div id="animals-grid" class="animal-grid"></div>
     </section>
 
-    <!-- ─── Sut ────────────────────────────────────────────────────── -->
+    <!-- Sut -->
     <section class="page" id="page-milk">
       <div class="page-header">
         <div class="page-title">Sut yig'ish</div>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-milk')">+ Qayd qilish</button>
+        <button class="btn btn-primary btn-sm" onclick="openMilkModal()">+ Sut qayd</button>
       </div>
-      <div id="milk-today-cards" class="stat-grid" style="margin-bottom:16px">
-        <div class="stat-card" style="background: linear-gradient(135deg, #16a34a, #22c55e); color: white;">
-          <div class="stat-label" style="color: rgba(255,255,255,0.9);">Bugun qancha sut qo'shildi</div>
-          <div class="stat-value" id="today-milk-total" style="font-size: 24px; font-weight: 700;">0 litr</div>
-        </div>
+      <div class="milk-date-nav">
+        <button onclick="shiftMilkDate(-1)">‹</button>
+        <input type="date" id="milk-date" onchange="loadMilk()">
+        <button onclick="shiftMilkDate(1)">›</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('milk-date').value=today();loadMilk()">Bugun</button>
       </div>
+      <div id="milk-stats" class="stat-grid" style="margin-bottom:16px"></div>
       <div class="card">
-        <div class="card-title">So'nggi yozuvlar</div>
-        <div id="milk-list"></div>
+        <div class="card-title">Har bir mol bo'yicha</div>
+        <div class="table-wrap"><table class="milk-table" id="milk-animal-table">
+          <thead><tr><th>Mol</th><th>1-soqim</th><th>2-soqim</th><th>Kunlik jami</th></tr></thead>
+          <tbody id="milk-table-body"></tbody>
+        </table></div>
       </div>
     </section>
 
-    <!-- ─── Sut Sotuvi ───────────────────────────────────────────────── -->
+    <!-- Sut sotuvi -->
     <section class="page" id="page-milk-sales">
       <div class="page-header">
         <div class="page-title">Sut sotuvi</div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-milk-sale')">+ Sotish</button>
       </div>
-      <div id="milk-sales-today-cards" class="stat-grid" style="margin-bottom:16px">
-        <div class="stat-card" style="background: linear-gradient(135deg, #0d9488, #14b8a6); color: white;">
-          <div class="stat-label" style="color: rgba(255,255,255,0.9);">Bugun sotilgan sut</div>
-          <div class="stat-value" id="today-milk-sales-total" style="font-size: 24px; font-weight: 700;">0 litr</div>
-        </div>
-        <div class="stat-card" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;">
-          <div class="stat-label" style="color: rgba(255,255,255,0.9);">Bugun daromad</div>
-          <div class="stat-value" id="today-milk-sales-revenue" style="font-size: 24px; font-weight: 700;">0 so'm</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">So'nggi sotuvlar</div>
-        <div id="milk-sales-list"></div>
-      </div>
+      <div id="milk-sales-stats" class="stat-grid" style="margin-bottom:16px"></div>
+      <div class="card"><div class="card-title">So'nggi sotuvlar</div><div id="milk-sales-list"></div></div>
     </section>
 
-    <!-- ─── Moliya ─────────────────────────────────────────────────── -->
+    <!-- Moliya -->
     <section class="page" id="page-finance">
-      <div class="page-header">
-        <div class="page-title">Moliya hisobi</div>
-      </div>
+      <div class="page-header"><div class="page-title">Moliya hisobi</div></div>
       <div class="period-tabs">
         <button class="period-tab active" onclick="setFinancePeriod('day',this)">Bugun</button>
         <button class="period-tab" onclick="setFinancePeriod('week',this)">Hafta</button>
@@ -355,7 +311,7 @@ a { color: inherit; text-decoration: none; }
       <div id="finance-content"><div class="loading">Yuklanmoqda...</div></div>
     </section>
 
-    <!-- ─── Harajatlar ─────────────────────────────────────────────── -->
+    <!-- Harajatlar -->
     <section class="page" id="page-expenses">
       <div class="page-header">
         <div class="page-title">Harajatlar</div>
@@ -364,21 +320,18 @@ a { color: inherit; text-decoration: none; }
       <div id="expenses-list"></div>
     </section>
 
-    <!-- ─── Admin ──────────────────────────────────────────────────── -->
+    <!-- Admin -->
     <section class="page" id="page-admin">
       <div class="page-header">
         <div class="page-title">Admin panel</div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-user')">+ Foydalanuvchi</button>
       </div>
-      <div class="card">
-        <div class="card-title">Foydalanuvchilar</div>
-        <div id="users-list"></div>
-      </div>
+      <div class="card"><div class="card-title">Foydalanuvchilar</div><div id="users-list"></div></div>
     </section>
   </main>
 </div>
 
-<!-- ─── Modals ────────────────────────────────────────────────────────────── -->
+<!-- ── Modals ── -->
 
 <!-- Animal Modal -->
 <div class="modal-overlay" id="modal-animal" style="display:none" onclick="bgClose(event,'modal-animal')">
@@ -389,62 +342,39 @@ a { color: inherit; text-decoration: none; }
     </div>
     <input type="hidden" id="animal-edit-id">
     <div class="form-row">
-      <div class="form-group">
-        <label>Quloq raqami *</label>
-        <input type="text" id="a-tag" placeholder="A001">
+      <div class="form-group"><label>Quloq raqami *</label><input type="text" id="a-tag" placeholder="A001"></div>
+      <div class="form-group"><label>Ismi (ixtiyoriy)</label><input type="text" id="a-name" placeholder="Qorabosh..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Turi</label>
+        <select id="a-type"><option value="sigir">Sigir</option><option value="buqa">Buqa</option></select>
       </div>
-      <div class="form-group">
-        <label>Ismi (ixtiyoriy)</label>
-        <input type="text" id="a-name" placeholder="Qorabosh...">
+      <div class="form-group"><label>Jinsi</label>
+        <select id="a-gender"><option value="female">Urg'ochi</option><option value="male">Erkak</option></select>
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Turi</label>
-        <select id="a-type">
-          <option value="sigir">Sigir</option>
-          <option value="buqa">Buqa</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Jinsi</label>
-        <select id="a-gender">
-          <option value="female">Urg'ochi</option>
-          <option value="male">Erkak</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Holati</label>
+      <div class="form-group"><label>Holati</label>
         <select id="a-status">
           <option value="sut_beradi">Sut beradi</option>
+          <option value="bogoz">Bog'oz (homilador)</option>
           <option value="vaqtincha">Vaqtincha yo'q</option>
           <option value="kasal">Kasal</option>
           <option value="bozak">Bozak</option>
-          <option value="bogoz">Bog'oz (homilador)</option>
+          <option value="sotildi">Sotildi</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Tug'ish soni</label>
-        <input type="number" id="a-births" placeholder="0" min="0">
-      </div>
+      <div class="form-group"><label>Tug'ish soni</label><input type="number" id="a-births" placeholder="0" min="0"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Kunlik sut (litr)</label>
-        <input type="number" id="a-milk" placeholder="0.0" step="0.5" min="0">
-        <div class="form-hint">Taxminiy kunlik sut</div>
-      </div>
-      <div class="form-group">
-        <label>Tug'ilgan sana</label>
-        <input type="date" id="a-bdate">
-      </div>
+      <div class="form-group"><label>Kunlik sut (litr)</label><input type="number" id="a-milk" placeholder="0.0" step="0.5" min="0"><div class="form-hint">Taxminiy kunlik sut</div></div>
+      <div class="form-group"><label>Tug'ilgan sana</label><input type="date" id="a-bdate"></div>
     </div>
-    <div class="form-group">
-      <label>Izoh</label>
-      <textarea id="a-notes" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea>
+    <div class="form-row">
+      <div class="form-group"><label>Oxirgi tug'gan sana</label><input type="date" id="a-calving"><div class="form-hint">So'nggi bola bergan sana</div></div>
+      <div class="form-group"><label>Urug'lantirilgan sana</label><input type="date" id="a-insem"><div class="form-hint">Uruglantirilgan sana</div></div>
     </div>
+    <div class="form-group"><label>Izoh</label><textarea id="a-notes" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-animal')">Bekor</button>
       <button class="btn btn-primary" style="flex:2" onclick="submitAnimal()">Saqlash</button>
@@ -459,8 +389,41 @@ a { color: inherit; text-decoration: none; }
       <div class="modal-title" id="detail-title">Mol ma'lumotlari</div>
       <button class="modal-close" onclick="closeModal('modal-animal-detail')">✕</button>
     </div>
-    <div id="animal-detail-body"></div>
+    <div class="detail-tabs">
+      <button class="detail-tab active" onclick="switchDetailTab('info',this)">Ma'lumot</button>
+      <button class="detail-tab" onclick="switchDetailTab('graph',this)">📊 Sut tarixi</button>
+    </div>
+    <div class="detail-panel active" id="detail-info"></div>
+    <div class="detail-panel" id="detail-graph"><div class="loading">Grafik yuklanmoqda...</div></div>
     <div class="modal-footer" id="animal-detail-footer"></div>
+  </div>
+</div>
+
+<!-- Milk Modal -->
+<div class="modal-overlay" id="modal-milk" style="display:none" onclick="bgClose(event,'modal-milk')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="milk-modal-title">Sut qayd qilish</div>
+      <button class="modal-close" onclick="closeModal('modal-milk')">✕</button>
+    </div>
+    <div class="form-group"><label>Mol *</label>
+      <select id="m-animal"><option value="">Molni tanlang...</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Sana</label><input type="date" id="m-date"></div>
+      <div class="form-group"><label>Sessiya</label>
+        <select id="m-session">
+          <option value="1">1-soqim (ertalab)</option>
+          <option value="2">2-soqim (kechqurun)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Miqdor (litr) *</label><input type="number" id="m-liters" placeholder="0.0" step="0.1" min="0"></div>
+    <div class="form-group"><label>Izoh</label><input type="text" id="m-notes" placeholder="Ixtiyoriy"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-milk')">Bekor</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitMilk()">Saqlash</button>
+    </div>
   </div>
 </div>
 
@@ -472,79 +435,21 @@ a { color: inherit; text-decoration: none; }
       <button class="modal-close" onclick="closeModal('modal-milk-sale')">✕</button>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Sana</label>
-        <input type="date" id="ms-date">
-      </div>
-      <div class="form-group">
-        <label>Miqdor (litr) *</label>
-        <input type="number" id="ms-liters" placeholder="0" step="0.5" min="0" oninput="calcMilkSaleTotal()">
-      </div>
+      <div class="form-group"><label>Sana</label><input type="date" id="ms-date"></div>
+      <div class="form-group"><label>Miqdor (litr) *</label><input type="number" id="ms-liters" placeholder="0" step="0.5" min="0" oninput="calcMilkSaleTotal()"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Narx (so'm/litr) *</label>
-        <input type="number" id="ms-price" placeholder="3000" min="0" oninput="calcMilkSaleTotal()">
-      </div>
-      <div class="form-group">
-        <label>Jami summa</label>
-        <input type="text" id="ms-total" readonly style="background: var(--bg);" value="—">
-      </div>
+      <div class="form-group"><label>Narx (so'm/litr) *</label><input type="number" id="ms-price" placeholder="3000" min="0" oninput="calcMilkSaleTotal()"></div>
+      <div class="form-group"><label>Jami summa</label><input type="text" id="ms-total" readonly style="background:var(--bg);" value="—"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Xaridor ismi *</label>
-        <input type="text" id="ms-buyer" placeholder="Xaridor ismi...">
-      </div>
-      <div class="form-group">
-        <label>Telefon</label>
-        <input type="text" id="ms-phone" placeholder="+998 XX XXX-XX-XX">
-      </div>
+      <div class="form-group"><label>Xaridor *</label><input type="text" id="ms-buyer" placeholder="Xaridor ismi..."></div>
+      <div class="form-group"><label>Telefon</label><input type="text" id="ms-phone" placeholder="+998..."></div>
     </div>
-    <div class="form-group">
-      <label>Izoh</label>
-      <textarea id="ms-notes" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea>
-    </div>
+    <div class="form-group"><label>Izoh</label><textarea id="ms-notes" rows="2"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-milk-sale')">Bekor</button>
       <button class="btn btn-primary" style="flex:2" onclick="submitMilkSale()">Saqlash</button>
-    </div>
-  </div>
-</div>
-
-<!-- Milk Modal -->
-<div class="modal-overlay" id="modal-milk" style="display:none" onclick="bgClose(event,'modal-milk')">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Sut yig'ish qayd qilish</div>
-      <button class="modal-close" onclick="closeModal('modal-milk')">✕</button>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Sana</label>
-        <input type="date" id="m-date">
-      </div>
-      <div class="form-group">
-        <label>Sessiya</label>
-        <select id="m-session">
-          <option value="1">1-soqim (ertalab)</option>
-          <option value="2">2-soqim (kechqurun)</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Jami litr *</label>
-        <input type="number" id="m-liters" placeholder="0" step="0.5" min="0">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Izoh</label>
-      <input type="text" id="m-notes" placeholder="Ixtiyoriy">
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-milk')">Bekor</button>
-      <button class="btn btn-primary" style="flex:2" onclick="submitMilk()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -557,12 +462,8 @@ a { color: inherit; text-decoration: none; }
       <button class="modal-close" onclick="closeModal('modal-expense')">✕</button>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Sana</label>
-        <input type="date" id="e-date">
-      </div>
-      <div class="form-group">
-        <label>Kategoriya</label>
+      <div class="form-group"><label>Sana</label><input type="date" id="e-date"></div>
+      <div class="form-group"><label>Kategoriya</label>
         <select id="e-category">
           <option value="em_xashak">Em-xashak</option>
           <option value="dori">Dori-darmon</option>
@@ -573,14 +474,8 @@ a { color: inherit; text-decoration: none; }
         </select>
       </div>
     </div>
-    <div class="form-group">
-      <label>Miqdor (so'm) *</label>
-      <input type="number" id="e-amount" placeholder="500000" min="0">
-    </div>
-    <div class="form-group">
-      <label>Tavsif</label>
-      <input type="text" id="e-desc" placeholder="Nima uchun...">
-    </div>
+    <div class="form-group"><label>Miqdor (so'm) *</label><input type="number" id="e-amount" placeholder="500000" min="0"></div>
+    <div class="form-group"><label>Tavsif</label><input type="text" id="e-desc" placeholder="Nima uchun..."></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-expense')">Bekor</button>
       <button class="btn btn-primary" style="flex:2" onclick="submitExpense()">Saqlash</button>
@@ -597,12 +492,8 @@ a { color: inherit; text-decoration: none; }
     </div>
     <input type="hidden" id="sell-animal-id">
     <div class="form-row">
-      <div class="form-group">
-        <label>Sana</label>
-        <input type="date" id="s-date">
-      </div>
-      <div class="form-group">
-        <label>Sabab</label>
+      <div class="form-group"><label>Sana</label><input type="date" id="s-date"></div>
+      <div class="form-group"><label>Sabab</label>
         <select id="s-reason">
           <option value="sotish">Sotish</option>
           <option value="soyish">So'yish</option>
@@ -611,23 +502,11 @@ a { color: inherit; text-decoration: none; }
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Narxi (so'm)</label>
-        <input type="number" id="s-price" placeholder="0" min="0">
-      </div>
-      <div class="form-group">
-        <label>Og'irligi (kg)</label>
-        <input type="number" id="s-weight" placeholder="0" min="0">
-      </div>
+      <div class="form-group"><label>Narxi (so'm)</label><input type="number" id="s-price" placeholder="0" min="0"></div>
+      <div class="form-group"><label>Og'irligi (kg)</label><input type="number" id="s-weight" placeholder="0" min="0"></div>
     </div>
-    <div class="form-group">
-      <label>Xaridor</label>
-      <input type="text" id="s-buyer" placeholder="Xaridor ismi yoki kompaniya">
-    </div>
-    <div class="form-group">
-      <label>Izoh</label>
-      <input type="text" id="s-notes" placeholder="Ixtiyoriy">
-    </div>
+    <div class="form-group"><label>Xaridor</label><input type="text" id="s-buyer" placeholder="Xaridor yoki kompaniya"></div>
+    <div class="form-group"><label>Izoh</label><input type="text" id="s-notes" placeholder="Ixtiyoriy"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-sell')">Bekor</button>
       <button class="btn btn-danger" style="flex:2" onclick="submitSale()">Tasdiqlash</button>
@@ -642,24 +521,11 @@ a { color: inherit; text-decoration: none; }
       <div class="modal-title">Yangi foydalanuvchi</div>
       <button class="modal-close" onclick="closeModal('modal-user')">✕</button>
     </div>
-    <div class="form-group">
-      <label>Ismi</label>
-      <input type="text" id="u-name" placeholder="Ism Familiya">
-    </div>
-    <div class="form-group">
-      <label>Username *</label>
-      <input type="text" id="u-username" placeholder="ishchi1">
-    </div>
-    <div class="form-group">
-      <label>Parol *</label>
-      <input type="password" id="u-password" placeholder="••••••••">
-    </div>
-    <div class="form-group">
-      <label>Rol</label>
-      <select id="u-role">
-        <option value="worker">Ishchi</option>
-        <option value="admin">Admin</option>
-      </select>
+    <div class="form-group"><label>Ismi</label><input type="text" id="u-name" placeholder="Ism Familiya"></div>
+    <div class="form-group"><label>Username *</label><input type="text" id="u-username" placeholder="ishchi1"></div>
+    <div class="form-group"><label>Parol *</label><input type="password" id="u-password" placeholder="••••••••"></div>
+    <div class="form-group"><label>Rol</label>
+      <select id="u-role"><option value="worker">Ishchi</option><option value="admin">Admin</option></select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-user')">Bekor</button>
@@ -670,586 +536,522 @@ a { color: inherit; text-decoration: none; }
 
 <div id="toast"></div>
 
-<!-- ─── JavaScript ────────────────────────────────────────────────────────── -->
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
 const S = {
-  token: null, user: null, page: 'dashboard',
-  animals: [], animalsFiltered: [],
-  financePeriod: 'month',
+  token:null, user:null, page:'dashboard',
+  animals:[], financePeriod:'month',
+  currentDetailAnimalId:null,
 };
 
-function getToken()  { 
-  try { 
-    // Try cookie first, fallback to localStorage
-    const cookies = document.cookie.split(';').reduce((acc, c) => {
-      const [key, ...rest] = c.trim().split('=');
-      if (key === 'token') acc[key.trim()] = rest.join('=').trim();
-      return acc;
-    }, {});
-    return cookies.token || localStorage.getItem('ferma_token'); 
-  } catch { return null; } 
-}
-function setToken(t) { 
-  try { 
-    localStorage.setItem('ferma_token', t);
-    // Also set cookie for server-side persistence
-    document.cookie = `token=${t}; Path=/; SameSite=Lax; Max-Age=86400`;
-  } catch {} 
-}
-function rmToken()   { 
-  try { 
-    localStorage.removeItem('ferma_token');
-    // Also clear cookie
-    document.cookie = 'token=; Path=/; Max-Age=0';
-  } catch {} 
-}
+function getToken()  { try{ const c=document.cookie.split(';').reduce((a,v)=>{const[k,...r]=v.trim().split('=');if(k.trim()==='token')a.t=r.join('=').trim();return a;},{});return c.t||localStorage.getItem('ferma_token'); }catch{return null;} }
+function setToken(t) { try{localStorage.setItem('ferma_token',t);document.cookie=`token=${t}; Path=/; SameSite=Lax; Max-Age=86400`;}catch{} }
+function rmToken()   { try{localStorage.removeItem('ferma_token');document.cookie='token=; Path=/; Max-Age=0';}catch{} }
 
 // ── API ──────────────────────────────────────────────────────────────────────
-async function api(method, path, body) {
-  const headers = { 'Content-Type': 'application/json' };
-  if (S.token) headers['x-session-token'] = S.token;
-  const opts = { method, headers, credentials: 'include' };
-  if (body) opts.body = JSON.stringify(body);
-  try {
-    const r = await fetch('/api' + path, opts);
-    const data = await r.json();
-    if (r.status === 401) { logout(); return null; }
+async function api(method,path,body){
+  const headers={'Content-Type':'application/json'};
+  if(S.token) headers['x-session-token']=S.token;
+  const opts={method,headers,credentials:'include'};
+  if(body) opts.body=JSON.stringify(body);
+  try{
+    const r=await fetch('/api'+path,opts);
+    const data=await r.json();
+    if(r.status===401){logout();return null;}
     return data;
-  } catch { showToast("Server bilan bog'liqlik xatosi", 'error'); return null; }
+  }catch{showToast("Server bilan bog'liqlik xatosi",'error');return null;}
 }
-const GET  = p      => api('GET',    p);
-const POST = (p, b) => api('POST',   p, b);
-const PUT  = (p, b) => api('PUT',    p, b);
-const DEL  = p      => api('DELETE', p);
+const GET  = p     => api('GET',p);
+const POST = (p,b) => api('POST',p,b);
+const PUT  = (p,b) => api('PUT',p,b);
+const DEL  = p     => api('DELETE',p);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-async function login() {
-  const username = document.getElementById('l-username').value.trim();
-  const password = document.getElementById('l-password').value;
-  document.getElementById('login-err').textContent = '';
-  if (!username || !password) { document.getElementById('login-err').textContent = 'Login va parolni kiriting'; return; }
-  const data = await POST('/login', { username, password });
-  if (!data || data.error) { document.getElementById('login-err').textContent = data?.error || 'Xatolik'; return; }
-  S.token = data.token;
-  S.user  = data.user;
+async function login(){
+  const username=document.getElementById('l-username').value.trim();
+  const password=document.getElementById('l-password').value;
+  document.getElementById('login-err').textContent='';
+  if(!username||!password){document.getElementById('login-err').textContent='Login va parolni kiriting';return;}
+  const data=await POST('/login',{username,password});
+  if(!data||data.error){document.getElementById('login-err').textContent=data?.error||'Xatolik';return;}
+  S.token=data.token; S.user=data.user;
   setToken(data.token);
   showApp();
 }
-
-async function initAuth() {
-  S.token = getToken();
-  if (!S.token) return showLogin();
-  const me = await GET('/me');
-  if (!me || me.error) return showLogin();
-  S.user = me;
-  showApp();
+async function initAuth(){
+  S.token=getToken();
+  if(!S.token) return showLogin();
+  const me=await GET('/me');
+  if(!me||me.error) return showLogin();
+  S.user=me; showApp();
 }
-
-function logout() {
-  if (S.token) POST('/logout', {});
-  S.token = null; S.user = null;
-  rmToken();
-  showLogin();
-}
-
-function showLogin() {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-}
-
-function showApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('app').style.flexDirection = 'column';
-  document.getElementById('user-chip').textContent = S.user.name || S.user.username;
-
-  // Admin-only tabs
-  if (S.user.role === 'admin') {
-    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-flex');
-  }
-
-  // Navigation
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.addEventListener('click', () => showPage(tab.dataset.page));
-  });
-
+function logout(){ if(S.token) POST('/logout',{}); S.token=null; S.user=null; rmToken(); showLogin(); }
+function showLogin(){ document.getElementById('login-screen').style.display='flex'; document.getElementById('app').style.display='none'; }
+function showApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('app').style.flexDirection='column';
+  document.getElementById('user-chip').textContent=S.user.name||S.user.username;
+  if(S.user.role==='admin') document.querySelectorAll('.admin-only').forEach(el=>el.style.display='inline-flex');
+  document.querySelectorAll('.nav-tab').forEach(tab=>{tab.addEventListener('click',()=>showPage(tab.dataset.page));});
   showPage('dashboard');
 }
 
 // ── Navigation ────────────────────────────────────────────────────────────────
-function showPage(page) {
-  S.page = page;
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
-  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
-  const loaders = { dashboard: loadDashboard, animals: loadAnimals, milk: loadMilk, 'milk-sales': loadMilkSales, finance: loadFinance, expenses: loadExpenses, admin: loadAdmin };
-  if (loaders[page]) loaders[page]();
+function showPage(page){
+  S.page=page;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===page));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
+  const loaders={dashboard:loadDashboard,animals:loadAnimals,milk:loadMilk,'milk-sales':loadMilkSales,finance:loadFinance,expenses:loadExpenses,admin:loadAdmin};
+  if(loaders[page]) loaders[page]();
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function fmt(n) {
-  if (!n) return '0';
-  return Math.round(n).toLocaleString('ru-RU');
-}
-function fmtSum(n) { return fmt(n) + " so'm"; }
-function fmtL(n)   { return parseFloat(n || 0).toFixed(1) + ' L'; }
-function today()   { return new Date().toISOString().split('T')[0]; }
-function fmtDate(d) {
-  if (!d) return '—';
-  const parts = d.split('-');
-  return `${parts[2]}.${parts[1]}.${parts[0]}`;
-}
-function shortDate(d) {
-  if (!d) return '';
-  const dt = new Date(d + 'T00:00:00');
-  const days = ['Ya','Du','Se','Ch','Pa','Sh','Ya'];
-  return days[dt.getDay()];
-}
+function fmt(n){ if(!n) return '0'; return Math.round(n).toLocaleString('ru-RU'); }
+function fmtSum(n){ return fmt(n)+" so'm"; }
+function fmtL(n){ return parseFloat(n||0).toFixed(1)+' L'; }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function fmtDate(d){ if(!d) return '—'; const p=String(d).split('T')[0].split('-'); return `${p[2]}.${p[1]}.${p[0]}`; }
+function shortDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return ['Ya','Du','Se','Ch','Pa','Sh','Ya'][dt.getDay()]; }
 
-function statusBadge(s) {
-  const map = {
-    sut_beradi: ['badge-green', 'Sut beradi'],
-    vaqtincha:  ['badge-amber', "Vaqtincha yo'q"],
-    kasal:      ['badge-red',   'Kasal'],
-    bozak:      ['badge-blue',  'Bozak'],
-    sotildi:    ['badge-gray',  'Sotildi'],
+function statusBadge(s){
+  const map={
+    sut_beradi:['badge-green','Sut beradi'],
+    bogoz:     ['badge-purple','Bog\'oz'],
+    vaqtincha: ['badge-amber',"Vaqtincha yo'q"],
+    kasal:     ['badge-red','Kasal'],
+    bozak:     ['badge-blue','Bozak'],
+    sotildi:   ['badge-gray','Sotildi'],
   };
-  const [cls, label] = map[s] || ['badge-gray', s];
+  const [cls,label]=map[s]||['badge-gray',s];
   return `<span class="badge ${cls}">${label}</span>`;
 }
-
-function catLabel(c) {
-  const m = { em_xashak:'Em-xashak', dori:'Dori', mehnat:'Mehnat', uskunalar:'Uskunalar', kommunal:'Kommunal', boshqa:'Boshqa' };
-  return m[c] || c;
-}
-
-function typeLabel(t) {
-  const m = { sigir:'Sigir', buqa:'Buqa', buzog:"Buzog'", qoracha:'Qoracha' };
-  return m[t] || t;
-}
+function catLabel(c){ const m={em_xashak:'Em-xashak',dori:'Dori',mehnat:'Mehnat',uskunalar:'Uskunalar',kommunal:'Kommunal',boshqa:'Boshqa'}; return m[c]||c; }
+function typeLabel(t){ const m={sigir:'Sigir',buqa:'Buqa'}; return m[t]||t; }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
-async function loadDashboard() {
-  document.getElementById('dashboard-content').innerHTML = '<div class="loading">Yuklanmoqda...</div>';
-  const d = await GET('/stats/dashboard');
-  if (!d) return;
-
-  const maxL = Math.max(...d.last7.map(x => x.liters), 1);
-
-  let barsHtml = d.last7.map(x => {
-    const h = Math.round((x.liters / maxL) * 100);
-    return `
-      <div class="bar-col">
-        <div class="bar-val-top">${x.liters > 0 ? fmtL(x.liters) : ''}</div>
-        <div class="bar-inner ${x.liters === 0 ? 'zero' : ''}" style="height:${h}%"></div>
-        <div class="bar-lbl">${shortDate(x.date)}</div>
-      </div>`;
+async function loadDashboard(){
+  document.getElementById('dashboard-content').innerHTML='<div class="loading">Yuklanmoqda...</div>';
+  const d=await GET('/stats/dashboard');
+  if(!d||d.error){document.getElementById('dashboard-content').innerHTML='<div class="empty">Ma\'lumot yuklashda xatolik</div>';return;}
+  const maxL=Math.max(...d.last7.map(x=>x.liters),1);
+  const barsHtml=d.last7.map(x=>{
+    const h=Math.round((x.liters/maxL)*100);
+    return `<div class="bar-col"><div class="bar-val-top">${x.liters>0?fmtL(x.liters):''}</div><div class="bar-inner ${x.liters===0?'zero':''}" style="height:${h}%"></div><div class="bar-lbl">${shortDate(x.date)}</div></div>`;
   }).join('');
-
-  const recentHtml = d.recentMilk.length === 0
-    ? '<div class="empty"><div>Hali qayd yo\'q</div></div>'
-    : d.recentMilk.map(r => `
-        <div class="list-item">
-          <div class="list-item-left">
-            <div class="list-item-title">${fmtL(r.liters)} — ${r.buyer}</div>
-            <div class="list-item-sub">${fmtDate(r.date)} · ${r.session}-soqim</div>
-          </div>
-          <div class="list-item-right">
-            <div class="amount-green">${fmtSum(r.total)}</div>
-          </div>
-        </div>`).join('');
-
-  document.getElementById('dashboard-content').innerHTML = `
+  const recentHtml=d.recentMilk.length===0
+    ?'<div class="empty"><div>Hali sotuv yo\'q</div></div>'
+    :d.recentMilk.map(r=>`
+      <div class="list-item">
+        <div class="list-item-left"><div class="list-item-title">${fmtL(r.liters)} — ${r.buyer}</div><div class="list-item-sub">${fmtDate(r.date)}</div></div>
+        <div class="list-item-right"><div class="amount-green">${fmtSum(r.total)}</div></div>
+      </div>`).join('');
+  document.getElementById('dashboard-content').innerHTML=`
     <div class="stat-grid">
-      <div class="stat-card green">
-        <div class="stat-label">Bugungi sut</div>
-        <div class="stat-val">${fmtL(d.todayLiters)}</div>
-        <div class="stat-sub">${fmtSum(d.todayRevenue)}</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="stat-label">Jami mol</div>
-        <div class="stat-val">${d.animalStats.total}</div>
-        <div class="stat-sub">Faol</div>
-      </div>
-      <div class="stat-card teal">
-        <div class="stat-label">Sut beradi</div>
-        <div class="stat-val">${d.animalStats.sut}</div>
-        <div class="stat-sub">ta mol</div>
-      </div>
-      <div class="stat-card red">
-        <div class="stat-label">Kasal</div>
-        <div class="stat-val">${d.animalStats.kasal}</div>
-        <div class="stat-sub">ta mol</div>
-      </div>
+      <div class="stat-card green"><div class="stat-label">Bugungi sut</div><div class="stat-val">${fmtL(d.todayLiters)}</div><div class="stat-sub">${fmtSum(d.todayRevenue)}</div></div>
+      <div class="stat-card blue"><div class="stat-label">Jami mol</div><div class="stat-val">${d.animalStats.total}</div><div class="stat-sub">Faol</div></div>
+      <div class="stat-card teal"><div class="stat-label">Sut beradi</div><div class="stat-val">${d.animalStats.sut}</div><div class="stat-sub">ta mol</div></div>
+      <div class="stat-card purple"><div class="stat-label">Bog'oz</div><div class="stat-val">${d.animalStats.bogoz}</div><div class="stat-sub">ta mol</div></div>
     </div>
-
-    <div class="chart-wrap">
-      <div class="chart-title">Oxirgi 7 kun — sut (litr)</div>
-      <div class="bar-chart">${barsHtml}</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">So'nggi sut yig'ishlari</div>
-      ${recentHtml}
-    </div>`;
+    <div class="chart-wrap"><div class="chart-title">Oxirgi 7 kun — sut (litr)</div><div class="bar-chart">${barsHtml}</div></div>
+    <div class="card"><div class="card-title">So'nggi sut sotuvlar</div>${recentHtml}</div>`;
 }
 
 // ── Animals ───────────────────────────────────────────────────────────────────
-async function loadAnimals() {
-  document.getElementById('animals-grid').innerHTML = '<div class="loading">Yuklanmoqda...</div>';
-  const data = await GET('/animals');
-  if (!data) return;
-  S.animals = data;
-  renderAnimals();
+async function loadAnimals(){
+  document.getElementById('animals-grid').innerHTML='<div class="loading">Yuklanmoqda...</div>';
+  const data=await GET('/animals');
+  if(!data) return;
+  S.animals=data; renderAnimals();
 }
-
-function filterAnimals() {
-  const q      = document.getElementById('animal-search').value.toLowerCase();
-  const status = document.getElementById('animal-status-filter').value;
-  let list = S.animals;
-  if (status !== 'all') list = list.filter(a => a.status === status);
-  if (q) list = list.filter(a => (a.tag_number || a.tag || '').toLowerCase().includes(q) || (a.name || '').toLowerCase().includes(q));
+function filterAnimals(){
+  const q=document.getElementById('animal-search').value.toLowerCase();
+  const status=document.getElementById('animal-status-filter').value;
+  let list=S.animals;
+  if(status!=='all') list=list.filter(a=>a.status===status);
+  if(q) list=list.filter(a=>(a.tag_number||'').toLowerCase().includes(q)||(a.name||'').toLowerCase().includes(q));
   renderAnimalGrid(list);
 }
-
-function renderAnimals() {
-  const counts = {
-    all: S.animals.length,
-    sut_beradi: S.animals.filter(a => a.status === 'sut_beradi').length,
-    vaqtincha:  S.animals.filter(a => a.status === 'vaqtincha').length,
-    kasal:      S.animals.filter(a => a.status === 'kasal').length,
-    bozak:      S.animals.filter(a => a.status === 'bozak').length,
-    sotildi:    S.animals.filter(a => a.status === 'sotildi').length,
+function renderAnimals(){
+  const counts={
+    all:S.animals.length,
+    sut_beradi:S.animals.filter(a=>a.status==='sut_beradi').length,
+    bogoz:S.animals.filter(a=>a.status==='bogoz').length,
+    vaqtincha:S.animals.filter(a=>a.status==='vaqtincha').length,
+    kasal:S.animals.filter(a=>a.status==='kasal').length,
+    bozak:S.animals.filter(a=>a.status==='bozak').length,
+    sotildi:S.animals.filter(a=>a.status==='sotildi').length,
   };
-  const chips = [
-    ['all', 'Barchasi', 'badge-gray'],
-    ['sut_beradi', 'Sut beradi', 'badge-green'],
-    ['vaqtincha', "Vaqtincha yo'q", 'badge-amber'],
-    ['kasal', 'Kasal', 'badge-red'],
-    ['bozak', 'Bozak', 'badge-blue'],
-    ['sotildi', 'Sotildi', 'badge-gray'],
+  const chips=[
+    ['all','Barchasi','badge-gray'],
+    ['sut_beradi','Sut beradi','badge-green'],
+    ['bogoz',"Bog'oz",'badge-purple'],
+    ['vaqtincha',"Vaqtincha yo'q",'badge-amber'],
+    ['kasal','Kasal','badge-red'],
+    ['bozak','Bozak','badge-blue'],
+    ['sotildi','Sotildi','badge-gray'],
   ];
-  document.getElementById('animals-count-row').innerHTML = chips.map(([v, l, cls]) =>
-    `<span class="count-chip badge ${cls} ${document.getElementById('animal-status-filter').value === v ? 'active' : ''}"
-       onclick="document.getElementById('animal-status-filter').value='${v}';filterAnimals()">${l} (${counts[v]})</span>`
+  const cur=document.getElementById('animal-status-filter').value;
+  document.getElementById('animals-count-row').innerHTML=chips.map(([v,l,cls])=>
+    `<span class="count-chip badge ${cls} ${cur===v?'active':''}" onclick="document.getElementById('animal-status-filter').value='${v}';filterAnimals()">${l} (${counts[v]})</span>`
   ).join('');
   filterAnimals();
 }
-
-function renderAnimalGrid(list) {
-  if (list.length === 0) {
-    document.getElementById('animals-grid').innerHTML = '<div class="empty"><div class="empty-icon">🐄</div><div>Mol topilmadi</div></div>';
-    return;
-  }
-  document.getElementById('animals-grid').innerHTML = list.map(a => `
+function renderAnimalGrid(list){
+  if(!list.length){ document.getElementById('animals-grid').innerHTML='<div class="empty"><div class="empty-icon">🐄</div><div>Mol topilmadi</div></div>'; return; }
+  document.getElementById('animals-grid').innerHTML=list.map(a=>`
     <div class="animal-card" onclick="showAnimalDetail('${a.id}')">
-      <div class="animal-tag">#${a.tag_number || a.tag}</div>
-      ${a.name ? `<div class="animal-name">${a.name}</div>` : ''}
+      <div class="animal-tag">#${a.tag_number}</div>
+      ${a.name?`<div class="animal-name">${a.name}</div>`:''}
       <div>${statusBadge(a.status)}</div>
       <div class="animal-meta">
         <span class="badge badge-gray">${typeLabel(a.type)}</span>
-        ${a.births > 0 ? `<span class="badge badge-teal">${a.births}x tug'gan</span>` : ''}
+        ${a.births>0?`<span class="badge badge-teal">${a.births}x tug'gan</span>`:''}
       </div>
       <div class="animal-info">
-        <span>${a.birth_date ? fmtDate(a.birth_date) : ''}</span>
-        ${a.daily_milk > 0 ? `<span class="milk-amount">${fmtL(a.daily_milk)}/kun</span>` : ''}
+        <span>${a.birth_date?fmtDate(a.birth_date):''}</span>
+        ${a.daily_milk>0?`<span class="milk-amount">${fmtL(a.daily_milk)}/kun</span>`:''}
       </div>
     </div>`).join('');
 }
 
-async function showAnimalDetail(id) {
-  const a = S.animals.find(x => x.id === id);
-  if (!a) return;
-  document.getElementById('detail-title').textContent = `#${a.tag_number || a.tag}${a.name ? ' — ' + a.name : ''}`;
-
-  const body = document.getElementById('animal-detail-body');
-  body.innerHTML = `
+async function showAnimalDetail(id){
+  const a=S.animals.find(x=>x.id===id);
+  if(!a) return;
+  S.currentDetailAnimalId=id;
+  document.getElementById('detail-title').textContent=`#${a.tag_number}${a.name?' — '+a.name:''}`;
+  // Switch to info tab
+  switchDetailTab('info', document.querySelector('.detail-tab'));
+  document.getElementById('detail-info').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div><div class="text-muted">Holat</div><div style="margin-top:4px">${statusBadge(a.status)}</div></div>
-      <div><div class="text-muted">Turi</div><div style="margin-top:4px"><strong>${typeLabel(a.type)}</strong> · ${a.gender === 'female' ? "Urg'ochi" : 'Erkak'}</div></div>
-      <div><div class="text-muted">Tug'ish soni</div><div><strong>${a.births || 0}</strong> marta</div></div>
-      <div><div class="text-muted">Kunlik sut</div><div><strong>${a.daily_milk > 0 ? fmtL(a.daily_milk) : '—'}</strong></div></div>
-      ${a.birth_date ? `<div><div class="text-muted">Tug'ilgan</div><div>${fmtDate(a.birth_date)}</div></div>` : ''}
-      <div><div class="text-muted">Qo'shilgan</div><div>${fmtDate(a.created_at?.split('T')[0])}</div></div>
+      <div><div class="text-muted">Turi / Jinsi</div><div style="margin-top:4px"><strong>${typeLabel(a.type)}</strong> · ${a.gender==='female'?"Urg'ochi":'Erkak'}</div></div>
+      <div><div class="text-muted">Tug'ish soni</div><div><strong>${a.births||0}</strong> marta</div></div>
+      <div><div class="text-muted">Kunlik sut (taxmin)</div><div><strong>${a.daily_milk>0?fmtL(a.daily_milk):'—'}</strong></div></div>
+      ${a.birth_date?`<div><div class="text-muted">Tug'ilgan</div><div>${fmtDate(a.birth_date)}</div></div>`:''}
+      ${a.last_calving_date?`<div><div class="text-muted">Oxirgi tug'gan</div><div><strong>${fmtDate(a.last_calving_date)}</strong></div></div>`:''}
+      ${a.insemination_date?`<div><div class="text-muted">Urug'lantirilgan</div><div><strong>${fmtDate(a.insemination_date)}</strong></div></div>`:''}
+      <div><div class="text-muted">Qo'shilgan</div><div>${fmtDate((a.created_at||'').split('T')[0])}</div></div>
     </div>
-    ${a.notes ? `<div class="card" style="margin-bottom:12px;background:var(--bg)"><div class="text-muted" style="font-size:12px">Izoh</div><div style="margin-top:4px">${a.notes}</div></div>` : ''}`;
+    ${a.notes?`<div class="card" style="background:var(--bg);margin-bottom:0"><div class="text-muted" style="font-size:12px">Izoh</div><div style="margin-top:4px">${a.notes}</div></div>`:''}`;
 
-  const footer = document.getElementById('animal-detail-footer');
-  const isAdmin = S.user.role === 'admin';
-  footer.innerHTML = `
+  document.getElementById('detail-graph').innerHTML='<div class="loading">Grafik yuklanmoqda...</div>';
+
+  const footer=document.getElementById('animal-detail-footer');
+  const isAdmin=S.user.role==='admin';
+  footer.innerHTML=`
     <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-animal-detail')">Yopish</button>
     <button class="btn btn-primary" style="flex:1" onclick="closeModal('modal-animal-detail');openEditAnimal('${a.id}')">Tahrirlash</button>
-    ${a.status !== 'sotildi' ? `<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>` : ''}
-    ${isAdmin ? `<button class="btn btn-danger" style="flex:0 0 auto" onclick="deleteAnimal('${a.id}')">🗑</button>` : ''}`;
-
+    ${a.status!=='sotildi'?`<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>`:''}
+    ${isAdmin?`<button class="btn btn-danger" style="flex:0 0 auto" onclick="deleteAnimal('${a.id}')">🗑</button>`:''}`;
   openModal('modal-animal-detail');
 }
 
-function openEditAnimal(id) {
-  const a = S.animals.find(x => x.id === id);
-  if (!a) return;
-  document.getElementById('animal-modal-title').textContent = 'Molni tahrirlash';
-  document.getElementById('animal-edit-id').value = a.id;
-  document.getElementById('a-tag').value    = a.tag_number || a.tag;
-  document.getElementById('a-name').value   = a.name || '';
-  document.getElementById('a-type').value   = a.type;
-  document.getElementById('a-gender').value = a.gender;
-  document.getElementById('a-status').value = a.status;
-  document.getElementById('a-births').value = a.births || 0;
-  document.getElementById('a-milk').value   = a.daily_milk || 0;
-  document.getElementById('a-bdate').value  = a.birth_date || '';
-  document.getElementById('a-notes').value  = a.notes || '';
+function switchDetailTab(tab, el){
+  document.querySelectorAll('.detail-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.detail-panel').forEach(p=>p.classList.remove('active'));
+  if(el) el.classList.add('active');
+  else document.querySelectorAll('.detail-tab')[tab==='info'?0:1].classList.add('active');
+  document.getElementById('detail-'+tab).classList.add('active');
+  if(tab==='graph' && S.currentDetailAnimalId) loadAnimalMilkGraph(S.currentDetailAnimalId);
+}
+
+async function loadAnimalMilkGraph(id){
+  const panel=document.getElementById('detail-graph');
+  panel.innerHTML='<div class="loading">Yuklanmoqda...</div>';
+  const data=await GET(`/animals/${id}/milk?days=30`);
+  if(!data||data.error||!data.length){
+    panel.innerHTML='<div class="empty"><div class="empty-icon">🥛</div><div>Sut tarixi yo\'q</div></div>';
+    return;
+  }
+  // Fill last 30 days with zeros
+  const map={};
+  data.forEach(r=>map[r.date]=r);
+  const days=[];
+  for(let i=29;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    days.push(map[ds]||{date:ds,total:0,s1:null,s2:null});
+  }
+  const maxV=Math.max(...days.map(d=>d.total),1);
+  const barsHtml=days.map(d=>{
+    const h=Math.round((d.total/maxV)*70);
+    const lbl=d.date.split('-').slice(1).join('/');
+    return `<div class="mini-bar">
+      <div class="mini-bar-fill ${d.total===0?'zero':''}" style="height:${Math.max(h,d.total>0?4:2)}px" title="${d.date}: ${fmtL(d.total)}"></div>
+      <div class="mini-bar-lbl" style="display:${days.indexOf(d)%5===0?'block':'none'}">${lbl}</div>
+    </div>`;
+  }).join('');
+  const totalSum=data.reduce((s,r)=>s+r.total,0);
+  const avgPerDay=totalSum/data.length;
+  panel.innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:13px">
+      <span class="text-muted">Oxirgi 30 kun</span>
+      <span><strong>${fmtL(totalSum)}</strong> jami · <strong>${fmtL(avgPerDay)}</strong>/kun</span>
+    </div>
+    <div class="mini-graph">${barsHtml}</div>
+    <div style="margin-top:16px">
+      ${data.slice(-7).reverse().map(d=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span class="text-muted">${fmtDate(d.date)}</span>
+          <span style="display:flex;gap:12px">
+            <span>1-soqim: <strong>${d.s1?fmtL(d.s1):'—'}</strong></span>
+            <span>2-soqim: <strong>${d.s2?fmtL(d.s2):'—'}</strong></span>
+            <span class="text-green"><strong>${fmtL(d.total)}</strong></span>
+          </span>
+        </div>`).join('')}
+    </div>`;
+}
+
+function openEditAnimal(id){
+  const a=S.animals.find(x=>x.id===id);
+  if(!a) return;
+  document.getElementById('animal-modal-title').textContent='Molni tahrirlash';
+  document.getElementById('animal-edit-id').value=a.id;
+  document.getElementById('a-tag').value=a.tag_number||'';
+  document.getElementById('a-name').value=a.name||'';
+  document.getElementById('a-type').value=a.type||'sigir';
+  document.getElementById('a-gender').value=a.gender||'female';
+  document.getElementById('a-status').value=a.status||'sut_beradi';
+  document.getElementById('a-births').value=a.births||0;
+  document.getElementById('a-milk').value=a.daily_milk||0;
+  document.getElementById('a-bdate').value=a.birth_date?a.birth_date.split('T')[0]:'';
+  document.getElementById('a-calving').value=a.last_calving_date?a.last_calving_date.split('T')[0]:'';
+  document.getElementById('a-insem').value=a.insemination_date?a.insemination_date.split('T')[0]:'';
+  document.getElementById('a-notes').value=a.notes||'';
   openModal('modal-animal');
 }
 
-async function submitAnimal() {
-  const tag = document.getElementById('a-tag').value.trim();
-  if (!tag) { showToast('Quloq raqami kerak', 'error'); return; }
-  const editId = document.getElementById('animal-edit-id').value;
-  const body = {
-    tag_number: tag, name: document.getElementById('a-name').value.trim(),
-    type: document.getElementById('a-type').value,
-    gender: document.getElementById('a-gender').value,
-    status: document.getElementById('a-status').value,
-    births: document.getElementById('a-births').value || 0,
-    daily_milk:  document.getElementById('a-milk').value  || 0,
-    birth_date: document.getElementById('a-bdate').value,
-    notes: document.getElementById('a-notes').value.trim(),
+function openAddAnimalModal(){
+  document.getElementById('animal-modal-title').textContent="Mol qo'shish";
+  document.getElementById('animal-edit-id').value='';
+  ['a-tag','a-name','a-notes'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('a-type').value='sigir';
+  document.getElementById('a-gender').value='female';
+  document.getElementById('a-status').value='sut_beradi';
+  document.getElementById('a-births').value=0;
+  document.getElementById('a-milk').value=0;
+  document.getElementById('a-bdate').value='';
+  document.getElementById('a-calving').value='';
+  document.getElementById('a-insem').value='';
+  openModal('modal-animal');
+}
+
+async function submitAnimal(){
+  const tag=document.getElementById('a-tag').value.trim();
+  if(!tag){showToast('Quloq raqami kerak','error');return;}
+  const editId=document.getElementById('animal-edit-id').value;
+  const body={
+    tag_number:tag, name:document.getElementById('a-name').value.trim(),
+    type:document.getElementById('a-type').value,
+    gender:document.getElementById('a-gender').value,
+    status:document.getElementById('a-status').value,
+    births:document.getElementById('a-births').value||0,
+    daily_milk:document.getElementById('a-milk').value||0,
+    birth_date:document.getElementById('a-bdate').value||null,
+    last_calving_date:document.getElementById('a-calving').value||null,
+    insemination_date:document.getElementById('a-insem').value||null,
+    notes:document.getElementById('a-notes').value.trim(),
   };
-  let res;
-  if (editId) { res = await PUT('/animals/' + editId, body); }
-  else        { res = await POST('/animals', body); }
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast(editId ? 'Saqlandi' : "Mol qo'shildi", 'success');
+  const res=editId?await PUT('/animals/'+editId,body):await POST('/animals',body);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast(editId?'Saqlandi':"Mol qo'shildi",'success');
   closeModal('modal-animal');
-  document.getElementById('animal-edit-id').value = '';
-  document.getElementById('animal-modal-title').textContent = "Mol qo'shish";
+  document.getElementById('animal-edit-id').value='';
+  document.getElementById('animal-modal-title').textContent="Mol qo'shish";
   loadAnimals();
 }
 
-async function deleteAnimal(id) {
-  if (!confirm("Molni o'chirishni tasdiqlaysizmi?")) return;
-  const res = await DEL('/animals/' + id);
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
+async function deleteAnimal(id){
+  if(!confirm("Molni o'chirishni tasdiqlaysizmi?")) return;
+  const res=await DEL('/animals/'+id);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
   showToast("Mol o'chirildi");
   closeModal('modal-animal-detail');
   loadAnimals();
 }
 
 // ── Milk ──────────────────────────────────────────────────────────────────────
-async function loadMilk() {
-  const [todayRecs, allRecs] = await Promise.all([
-    GET('/milk?date=' + today()),
-    GET('/milk?limit=40')
-  ]);
-  if (!todayRecs || !allRecs) return;
-
-  const s1 = todayRecs.find(r => r.session === 1);
-  const s2 = todayRecs.find(r => r.session === 2);
-  const total = todayRecs.reduce((s, r) => s + r.liters, 0);
-
-  // Bugun qancha sut qo'shildi kartasini yangilash
-  document.getElementById('today-milk-total').textContent = fmtL(total);
-
-  document.getElementById('milk-today-cards').innerHTML = `
-    <div class="stat-card teal">
-      <div class="stat-label">Bugun jami</div>
-      <div class="stat-val">${fmtL(total)}</div>
-    </div>
-    <div class="stat-card ${s1 ? 'green' : 'amber'}">
-      <div class="stat-label">1-soqim</div>
-      <div class="stat-val">${s1 ? fmtL(s1.liters) : '—'}</div>
-    </div>
-    <div class="stat-card ${s2 ? 'green' : 'amber'}">
-      <div class="stat-label">2-soqim</div>
-      <div class="stat-val">${s2 ? fmtL(s2.liters) : '—'}</div>
-    </div>`;
-
-  if (allRecs.length === 0) {
-    document.getElementById('milk-list').innerHTML = '<div class="empty"><div class="empty-icon">🥛</div><div>Hali qayd yo\'q</div></div>';
+async function loadMilk(){
+  const date=document.getElementById('milk-date').value||today();
+  document.getElementById('milk-date').value=date;
+  document.getElementById('milk-table-body').innerHTML=`<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted)">Yuklanmoqda...</td></tr>`;
+  const rows=await GET('/milk/daily?date='+date);
+  if(!rows) return;
+  const totalLiters=rows.reduce((s,r)=>s+r.total,0);
+  const s1Total=rows.reduce((s,r)=>s+(r.s1||0),0);
+  const s2Total=rows.reduce((s,r)=>s+(r.s2||0),0);
+  document.getElementById('milk-stats').innerHTML=`
+    <div class="stat-card teal"><div class="stat-label">Kunlik jami</div><div class="stat-val">${fmtL(totalLiters)}</div><div class="stat-sub">${rows.filter(r=>r.total>0).length} ta mol</div></div>
+    <div class="stat-card ${s1Total>0?'green':'amber'}"><div class="stat-label">1-soqim</div><div class="stat-val">${fmtL(s1Total)}</div></div>
+    <div class="stat-card ${s2Total>0?'green':'amber'}"><div class="stat-label">2-soqim</div><div class="stat-val">${fmtL(s2Total)}</div></div>`;
+  if(!rows.length){
+    document.getElementById('milk-table-body').innerHTML=`<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">Mollar topilmadi</td></tr>`;
     return;
   }
-
-  document.getElementById('milk-list').innerHTML = allRecs.map(r => `
-    <div class="list-item">
-      <div class="list-item-left">
-        <div class="list-item-title">${fmtL(r.liters)} litr</div>
-        <div class="list-item-sub">${fmtDate(r.date)} · ${r.session}-soqim · ${r.tag_number} ${r.name ? '· ' + r.name : ''}</div>
-      </div>
-      <div class="list-item-right">
-        <div class="amount-green">${fmtSum(r.total)}</div>
-        ${S.user.role === 'admin' ? `<button class="btn btn-sm" style="color:var(--red);background:none;border:none;padding:4px;margin-top:2px" onclick="deleteMilk('${r.id}')">🗑</button>` : ''}
-      </div>
-    </div>`).join('');
+  document.getElementById('milk-table-body').innerHTML=rows.map(r=>{
+    const isAdmin=S.user&&S.user.role==='admin';
+    const s1Html=r.s1!==null
+      ?`<div class="session-cell"><span class="session-val">${fmtL(r.s1)}</span>${isAdmin?`<button class="del-session-btn" onclick="deleteMilkSession('${r.s1_id}','${date}')" title="O'chirish">✕</button>`:''}</div>`
+      :`<div class="session-cell"><span class="session-empty">—</span><button class="add-session-btn" onclick="openMilkModal('${r.id}','${r.tag_number}',1,'${date}')" title="Qo'shish">+</button></div>`;
+    const s2Html=r.s2!==null
+      ?`<div class="session-cell"><span class="session-val">${fmtL(r.s2)}</span>${isAdmin?`<button class="del-session-btn" onclick="deleteMilkSession('${r.s2_id}','${date}')" title="O'chirish">✕</button>`:''}</div>`
+      :`<div class="session-cell"><span class="session-empty">—</span><button class="add-session-btn" onclick="openMilkModal('${r.id}','${r.tag_number}',2,'${date}')" title="Qo'shish">+</button></div>`;
+    return `<tr>
+      <td><strong>#${r.tag_number}</strong>${r.name?`<br><span style="font-size:12px;color:var(--muted)">${r.name}</span>`:''}${r.status!=='sut_beradi'?`<br>${statusBadge(r.status)}`:''}
+      </td>
+      <td>${s1Html}</td>
+      <td>${s2Html}</td>
+      <td><strong style="color:${r.total>0?'var(--teal)':'var(--muted)'}">${r.total>0?fmtL(r.total):'0'}</strong></td>
+    </tr>`;
+  }).join('')+`
+    <tr class="milk-total-row">
+      <td><strong>Jami</strong></td>
+      <td><strong>${fmtL(s1Total)}</strong></td>
+      <td><strong>${fmtL(s2Total)}</strong></td>
+      <td><strong style="color:var(--teal)">${fmtL(totalLiters)}</strong></td>
+    </tr>`;
 }
 
-function calcMilkTotal() {
-  const L = parseFloat(document.getElementById('m-liters').value) || 0;
-  const P = parseFloat(document.getElementById('m-price').value)  || 0;
-  document.getElementById('m-total-show').textContent = L && P ? fmtSum(Math.round(L * P)) : '—';
+async function openMilkModal(animalId='', animalTag='', session=1, date=''){
+  // Load animals list
+  if(!S.animals.length) await loadAnimals();
+  const select=document.getElementById('m-animal');
+  select.innerHTML='<option value="">Molni tanlang...</option>'+
+    S.animals.filter(a=>a.status!=='sotildi').map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
+  if(animalId) select.value=animalId;
+  document.getElementById('m-date').value=date||today();
+  document.getElementById('m-session').value=session;
+  document.getElementById('m-liters').value='';
+  document.getElementById('m-notes').value='';
+  document.getElementById('milk-modal-title').textContent=animalTag?`#${animalTag} — ${session}-soqim`:'Sut qayd qilish';
+  openModal('modal-milk');
 }
 
-function calcMilkSaleTotal() {
-  const L = parseFloat(document.getElementById('ms-liters').value) || 0;
-  const P = parseFloat(document.getElementById('ms-price').value)  || 0;
-  document.getElementById('ms-total').value = L && P ? Math.round(L * P) : '—';
+function shiftMilkDate(delta){
+  const d=new Date(document.getElementById('milk-date').value+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  document.getElementById('milk-date').value=d.toISOString().split('T')[0];
+  loadMilk();
 }
 
-async function loadMilkSales() {
-  const [todayRecs, allRecs] = await Promise.all([
-    GET('/milk-sales?date=' + today()),
-    GET('/milk-sales?limit=40')
-  ]);
-  if (!todayRecs || !allRecs) return;
-
-  const totalLiters = todayRecs.reduce((s, r) => s + r.liters, 0);
-  const totalRevenue = todayRecs.reduce((s, r) => s + r.total, 0);
-
-  // Bugungi sotuvlar kartalarini yangilash
-  document.getElementById('today-milk-sales-total').textContent = fmtL(totalLiters);
-  document.getElementById('today-milk-sales-revenue').textContent = fmtSum(totalRevenue);
-
-  if (allRecs.length === 0) {
-    document.getElementById('milk-sales-list').innerHTML = '<div class="empty"><div class="empty-icon">🛒</div><div>Hali sotuv yo\'q</div></div>';
-    return;
-  }
-
-  document.getElementById('milk-sales-list').innerHTML = allRecs.map(r => `
-    <div class="list-item">
-      <div class="list-item-left">
-        <div class="list-item-title">${fmtL(r.liters)} litr · ${r.buyer}</div>
-        <div class="list-item-sub">${fmtDate(r.date)} · ${fmt(r.price)} so'm/L ${r.phone ? '· ' + r.phone : ''}</div>
-      </div>
-      <div class="list-item-right">
-        <div class="amount-green">${fmtSum(r.total)}</div>
-        ${S.user.role === 'admin' ? `<button class="btn btn-sm" style="color:var(--red);background:none;border:none;padding:4px;margin-top:2px" onclick="deleteMilkSale('${r.id}')">🗑</button>` : ''}
-      </div>
-    </div>`).join('');
-}
-
-async function submitMilkSale() {
-  const liters = parseFloat(document.getElementById('ms-liters').value);
-  const price  = parseFloat(document.getElementById('ms-price').value);
-  const buyer  = document.getElementById('ms-buyer').value.trim();
-  const phone  = document.getElementById('ms-phone').value.trim();
-  const notes  = document.getElementById('ms-notes').value.trim();
-  const date   = document.getElementById('ms-date').value || today();
-
-  if (!liters || !price || !buyer) { 
-    showToast('Miqdor, narx va xaridor ismini kiriting', 'error'); 
-    return; 
-  }
-
-  const res = await POST('/milk-sales', {
-    date, liters, price, buyer, phone, notes,
-    total: Math.round(liters * price)
+async function submitMilk(){
+  const animal_id=document.getElementById('m-animal').value;
+  const liters=parseFloat(document.getElementById('m-liters').value);
+  const session=document.getElementById('m-session').value;
+  if(!animal_id){showToast('Molni tanlang','error');return;}
+  if(!liters){showToast('Litr miqdorini kiriting','error');return;}
+  const res=await POST('/milk',{
+    animal_id, date:document.getElementById('m-date').value||today(),
+    session, liters, notes:document.getElementById('m-notes').value,
   });
-
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast('Sotuv saqlandi', 'success');
-  closeModal('modal-milk-sale');
-  loadMilkSales();
-  if (S.page === 'dashboard') loadDashboard();
-}
-
-async function deleteMilkSale(id) {
-  if (!confirm("Sotuvni o'chirishni tasdiqlaysizmi?")) return;
-  const res = await DEL('/milk-sales/' + id);
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast("Sotuv o'chirildi");
-  loadMilkSales();
-  if (S.page === 'dashboard') loadDashboard();
-}
-
-async function submitMilk() {
-  const liters = parseFloat(document.getElementById('m-liters').value);
-  const session = document.getElementById('m-session').value;
-  
-  if (!liters) { showToast('Litr miqdorini kiriting', 'error'); return; }
-  
-  const res = await POST('/milk', {
-    date: document.getElementById('m-date').value || today(),
-    session: session,
-    liters: liters,
-    notes: document.getElementById('m-notes').value,
-  });
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast('Qayd saqlandi', 'success');
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast('Qayd saqlandi','success');
   closeModal('modal-milk');
   loadMilk();
-  if (S.page === 'dashboard') loadDashboard();
+  if(S.page==='dashboard') loadDashboard();
 }
 
-async function deleteMilk(id) {
-  if (!confirm("Yozuvni o'chirishni tasdiqlaysizmi?")) return;
-  const res = await DEL('/milk/' + id);
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
+async function deleteMilkSession(id, date){
+  if(!confirm("Bu soqimni o'chirishni tasdiqlaysizmi?")) return;
+  const res=await DEL('/milk/'+id);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
   showToast("O'chirildi");
   loadMilk();
 }
 
+// ── Milk Sales ────────────────────────────────────────────────────────────────
+async function loadMilkSales(){
+  const [todayRecs,allRecs]=await Promise.all([GET('/milk-sales?date='+today()),GET('/milk-sales?limit=40')]);
+  if(!todayRecs||!allRecs) return;
+  const totalL=todayRecs.reduce((s,r)=>s+parseFloat(r.liters),0);
+  const totalRev=todayRecs.reduce((s,r)=>s+parseFloat(r.total),0);
+  document.getElementById('milk-sales-stats').innerHTML=`
+    <div class="stat-card teal"><div class="stat-label">Bugun sotilgan</div><div class="stat-val">${fmtL(totalL)}</div></div>
+    <div class="stat-card green"><div class="stat-label">Bugun daromad</div><div class="stat-val" style="font-size:18px">${fmtSum(totalRev)}</div></div>`;
+  if(!allRecs.length){document.getElementById('milk-sales-list').innerHTML='<div class="empty"><div class="empty-icon">🛒</div><div>Hali sotuv yo\'q</div></div>';return;}
+  document.getElementById('milk-sales-list').innerHTML=allRecs.map(r=>`
+    <div class="list-item">
+      <div class="list-item-left">
+        <div class="list-item-title">${fmtL(r.liters)} · ${r.buyer}</div>
+        <div class="list-item-sub">${fmtDate(r.date)} · ${fmt(r.price)} so'm/L${r.phone?' · '+r.phone:''}</div>
+      </div>
+      <div class="list-item-right">
+        <div class="amount-green">${fmtSum(r.total)}</div>
+        ${S.user.role==='admin'?`<button class="btn btn-sm" style="color:var(--red);background:none;border:none;padding:4px;margin-top:2px" onclick="deleteMilkSale('${r.id}')">🗑</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function calcMilkSaleTotal(){
+  const L=parseFloat(document.getElementById('ms-liters').value)||0;
+  const P=parseFloat(document.getElementById('ms-price').value)||0;
+  document.getElementById('ms-total').value=L&&P?Math.round(L*P):'—';
+}
+
+async function submitMilkSale(){
+  const liters=parseFloat(document.getElementById('ms-liters').value);
+  const price=parseFloat(document.getElementById('ms-price').value);
+  const buyer=document.getElementById('ms-buyer').value.trim();
+  if(!liters||!price||!buyer){showToast('Miqdor, narx va xaridor kerak','error');return;}
+  const res=await POST('/milk-sales',{
+    date:document.getElementById('ms-date').value||today(),
+    liters,price,buyer,
+    phone:document.getElementById('ms-phone').value.trim(),
+    notes:document.getElementById('ms-notes').value.trim(),
+  });
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast('Sotuv saqlandi','success');
+  closeModal('modal-milk-sale');
+  loadMilkSales();
+  if(S.page==='dashboard') loadDashboard();
+}
+
+async function deleteMilkSale(id){
+  if(!confirm("Sotuvni o'chirishni tasdiqlaysizmi?")) return;
+  const res=await DEL('/milk-sales/'+id);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast("O'chirildi");
+  loadMilkSales();
+  if(S.page==='dashboard') loadDashboard();
+}
+
 // ── Finance ───────────────────────────────────────────────────────────────────
-function setFinancePeriod(p, el) {
-  S.financePeriod = p;
-  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+function setFinancePeriod(p,el){
+  S.financePeriod=p;
+  document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   loadFinance();
 }
-
-async function loadFinance() {
-  document.getElementById('finance-content').innerHTML = '<div class="loading">Yuklanmoqda...</div>';
-  const d = await GET('/stats/finance?period=' + S.financePeriod);
-  if (!d || d.error) { document.getElementById('finance-content').innerHTML = '<div class="empty">Ma\'lumot yo\'q</div>'; return; }
-
-  const maxChart = Math.max(...d.chart.map(x => Math.max(x.income, x.expense)), 1);
-  const chartHtml = d.chart.map((x, i) => {
-    const iH = Math.round((x.income  / maxChart) * 90);
-    const eH = Math.round((x.expense / maxChart) * 90);
-    const lbl = S.financePeriod === 'year'
-      ? (x.date.split('-')[1] + '-oy')
-      : x.date.split('-').slice(1).join('/');
+async function loadFinance(){
+  document.getElementById('finance-content').innerHTML='<div class="loading">Yuklanmoqda...</div>';
+  const d=await GET('/stats/finance?period='+S.financePeriod);
+  if(!d||d.error){document.getElementById('finance-content').innerHTML='<div class="empty">Ma\'lumot yo\'q</div>';return;}
+  const maxC=Math.max(...d.chart.map(x=>Math.max(x.income,x.expense)),1);
+  const chartHtml=d.chart.map(x=>{
+    const iH=Math.round((x.income/maxC)*90), eH=Math.round((x.expense/maxC)*90);
+    const lbl=S.financePeriod==='year'?x.date.split('-')[1]+'-oy':x.date.split('-').slice(1).join('/');
     return `<div class="bar-col" style="gap:2px">
       <div style="display:flex;align-items:flex-end;gap:2px;height:90px">
         <div style="flex:1;background:var(--green);opacity:.75;border-radius:3px 3px 0 0;min-height:3px;height:${iH}px"></div>
         <div style="flex:1;background:var(--red);opacity:.65;border-radius:3px 3px 0 0;min-height:3px;height:${eH}px"></div>
-      </div>
-      <div class="bar-lbl">${lbl}</div>
-    </div>`;
+      </div><div class="bar-lbl">${lbl}</div></div>`;
   }).join('');
-
-  const catEntries = Object.entries(d.byCat).sort((a, b) => b[1] - a[1]);
-  const maxCat = catEntries[0]?.[1] || 1;
-  const catHtml = catEntries.length === 0 ? '<div class="text-muted">Harajat yo\'q</div>' :
-    catEntries.map(([c, v]) => `
+  const catEntries=Object.entries(d.byCat).sort((a,b)=>b[1]-a[1]);
+  const maxCat=catEntries[0]?.[1]||1;
+  const catHtml=catEntries.length===0?'<div class="text-muted">Harajat yo\'q</div>':
+    catEntries.map(([c,v])=>`
       <div class="cat-bar-row">
         <div class="cat-bar-label"><span>${catLabel(c)}</span><strong>${fmtSum(v)}</strong></div>
         <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.round(v/maxCat*100)}%"></div></div>
       </div>`).join('');
-
-  document.getElementById('finance-content').innerHTML = `
+  document.getElementById('finance-content').innerHTML=`
     <div class="stat-grid">
-      <div class="stat-card green">
-        <div class="stat-label">Sut daromadi</div>
-        <div class="stat-val" style="font-size:20px">${fmtSum(d.milkRevenue)}</div>
-        <div class="stat-sub">${fmtL(d.milkLiters)}</div>
-      </div>
-      <div class="stat-card teal">
-        <div class="stat-label">Mol sotish</div>
-        <div class="stat-val" style="font-size:20px">${fmtSum(d.salesRevenue)}</div>
-        <div class="stat-sub">${d.salesCount} ta mol</div>
-      </div>
-      <div class="stat-card red">
-        <div class="stat-label">Harajatlar</div>
-        <div class="stat-val" style="font-size:20px">${fmtSum(d.totalExpenses)}</div>
-        <div class="stat-sub">${d.expCount} ta yozuv</div>
-      </div>
-      <div class="stat-card ${d.netProfit >= 0 ? 'blue' : 'red'}">
-        <div class="stat-label">Sof foyda</div>
-        <div class="stat-val" style="font-size:20px;color:${d.netProfit >= 0 ? 'var(--blue)' : 'var(--red)'}">${fmtSum(d.netProfit)}</div>
-        <div class="stat-sub">${d.netProfit >= 0 ? 'Ijobiy' : 'Manfiy'}</div>
-      </div>
+      <div class="stat-card green"><div class="stat-label">Sut daromadi</div><div class="stat-val" style="font-size:18px">${fmtSum(d.milkRevenue)}</div><div class="stat-sub">${fmtL(d.milkLiters)}</div></div>
+      <div class="stat-card teal"><div class="stat-label">Mol sotish</div><div class="stat-val" style="font-size:18px">${fmtSum(d.salesRevenue)}</div><div class="stat-sub">${d.salesCount} ta mol</div></div>
+      <div class="stat-card red"><div class="stat-label">Harajatlar</div><div class="stat-val" style="font-size:18px">${fmtSum(d.totalExpenses)}</div><div class="stat-sub">${d.expCount} ta yozuv</div></div>
+      <div class="stat-card ${d.netProfit>=0?'blue':'red'}"><div class="stat-label">Sof foyda</div><div class="stat-val" style="font-size:18px;color:${d.netProfit>=0?'var(--blue)':'var(--red)'}">${fmtSum(d.netProfit)}</div></div>
     </div>
-
     <div class="chart-wrap">
       <div class="chart-title" style="display:flex;gap:16px;align-items:center">
         <span>Daromad / Harajat</span>
@@ -1260,196 +1062,132 @@ async function loadFinance() {
       </div>
       <div class="bar-chart">${chartHtml}</div>
     </div>
-
-    <div class="card">
-      <div class="card-title">Harajat kategoriyasi bo'yicha</div>
-      <div class="cat-bar-wrap">${catHtml}</div>
-    </div>`;
+    <div class="card"><div class="card-title">Harajat kategoriyalari</div><div class="cat-bar-wrap">${catHtml}</div></div>`;
 }
 
 // ── Expenses ──────────────────────────────────────────────────────────────────
-async function loadExpenses() {
-  const data = await GET('/expenses?limit=60');
-  if (!data) return;
-  if (data.length === 0) {
-    document.getElementById('expenses-list').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>Harajat yo\'q</div></div>';
-    return;
-  }
-  document.getElementById('expenses-list').innerHTML = data.map(e => `
+async function loadExpenses(){
+  const data=await GET('/expenses?limit=60');
+  if(!data) return;
+  if(!data.length){document.getElementById('expenses-list').innerHTML='<div class="empty"><div class="empty-icon">📋</div><div>Harajat yo\'q</div></div>';return;}
+  document.getElementById('expenses-list').innerHTML=data.map(e=>`
     <div class="list-item">
       <div class="list-item-left">
-        <div class="list-item-title">${e.description || catLabel(e.category)}</div>
+        <div class="list-item-title">${e.description||catLabel(e.category)}</div>
         <div class="list-item-sub">${fmtDate(e.date)} · <span class="badge badge-amber">${catLabel(e.category)}</span></div>
       </div>
       <div class="list-item-right">
         <div class="amount-red">-${fmtSum(e.amount)}</div>
-        ${S.user.role === 'admin' ? `<button class="btn btn-sm" style="color:var(--red);background:none;border:none;padding:4px" onclick="deleteExpense('${e.id}')">🗑</button>` : ''}
+        ${S.user.role==='admin'?`<button class="btn btn-sm" style="color:var(--red);background:none;border:none;padding:4px" onclick="deleteExpense('${e.id}')">🗑</button>`:''}
       </div>
     </div>`).join('');
 }
-
-async function submitExpense() {
-  const amount = parseFloat(document.getElementById('e-amount').value);
-  if (!amount) { showToast('Miqdorni kiriting', 'error'); return; }
-  const res = await POST('/expenses', {
-    date: document.getElementById('e-date').value || today(),
-    category: document.getElementById('e-category').value,
-    amount, description: document.getElementById('e-desc').value,
+async function submitExpense(){
+  const amount=parseFloat(document.getElementById('e-amount').value);
+  if(!amount){showToast('Miqdorni kiriting','error');return;}
+  const res=await POST('/expenses',{
+    date:document.getElementById('e-date').value||today(),
+    category:document.getElementById('e-category').value,
+    amount, description:document.getElementById('e-desc').value,
   });
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast('Harajat saqlandi', 'success');
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast('Harajat saqlandi','success');
   closeModal('modal-expense');
   loadExpenses();
 }
-
-async function deleteExpense(id) {
-  if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-  const res = await DEL('/expenses/' + id);
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast("O'chirildi");
-  loadExpenses();
+async function deleteExpense(id){
+  if(!confirm("O'chirishni tasdiqlaysizmi?")) return;
+  const res=await DEL('/expenses/'+id);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast("O'chirildi"); loadExpenses();
 }
 
 // ── Sell Animal ───────────────────────────────────────────────────────────────
-function openSellModal(animalId) {
-  const a = S.animals.find(x => x.id === animalId);
-  if (!a) return;
-  document.getElementById('sell-title').textContent = `Mol sotish — #${a.tag}`;
-  document.getElementById('sell-animal-id').value = animalId;
-  document.getElementById('s-date').value = today();
-  document.getElementById('s-price').value = '';
-  document.getElementById('s-weight').value = '';
-  document.getElementById('s-buyer').value = '';
-  document.getElementById('s-notes').value = '';
+function openSellModal(animalId){
+  const a=S.animals.find(x=>x.id===animalId);
+  if(!a) return;
+  document.getElementById('sell-title').textContent=`Mol sotish — #${a.tag_number}`;
+  document.getElementById('sell-animal-id').value=animalId;
+  document.getElementById('s-date').value=today();
+  ['s-price','s-weight','s-buyer','s-notes'].forEach(id=>document.getElementById(id).value='');
   openModal('modal-sell');
 }
-
-async function submitSale() {
-  const id = document.getElementById('sell-animal-id').value;
-  const a  = S.animals.find(x => x.id === id);
-  if (!a) return;
-  const res = await POST('/sales', {
-    animal_id: id, animal_tag: a.tag,
-    date:    document.getElementById('s-date').value,
-    reason:  document.getElementById('s-reason').value,
-    price:   document.getElementById('s-price').value   || 0,
-    weight_kg: document.getElementById('s-weight').value || 0,
-    buyer:   document.getElementById('s-buyer').value,
-    notes:   document.getElementById('s-notes').value,
+async function submitSale(){
+  const id=document.getElementById('sell-animal-id').value;
+  const res=await POST('/sales',{
+    animal_id:id,
+    date:document.getElementById('s-date').value,
+    reason:document.getElementById('s-reason').value,
+    price:document.getElementById('s-price').value||0,
+    weight_kg:document.getElementById('s-weight').value||0,
+    buyer:document.getElementById('s-buyer').value,
+    notes:document.getElementById('s-notes').value,
   });
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast("Mol 'sotildi' holatiga o'tdi", 'success');
-  closeModal('modal-sell');
-  loadAnimals();
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast("Mol 'sotildi' holatiga o'tdi",'success');
+  closeModal('modal-sell'); loadAnimals();
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
-async function loadAdmin() {
-  const users = await GET('/users');
-  if (!users) return;
-  document.getElementById('users-list').innerHTML = users.map(u => `
+async function loadAdmin(){
+  const users=await GET('/users');
+  if(!users) return;
+  document.getElementById('users-list').innerHTML=users.map(u=>`
     <div class="list-item">
       <div class="list-item-left">
-        <div class="list-item-title">${u.name || u.username}</div>
-        <div class="list-item-sub">@${u.username} · <span class="badge ${u.role === 'admin' ? 'badge-blue' : 'badge-gray'}">${u.role === 'admin' ? 'Admin' : 'Ishchi'}</span></div>
+        <div class="list-item-title">${u.name||u.username}</div>
+        <div class="list-item-sub">@${u.username} · <span class="badge ${u.role==='admin'?'badge-blue':'badge-gray'}">${u.role==='admin'?'Admin':'Ishchi'}</span></div>
       </div>
       <div class="list-item-right">
-        ${u.id !== S.user.id ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">O'chirish</button>` : '<span class="badge badge-green">Siz</span>'}
+        ${u.id!==S.user.id?`<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">O'chirish</button>`:'<span class="badge badge-green">Siz</span>'}
       </div>
     </div>`).join('');
 }
-
-async function submitUser() {
-  const username = document.getElementById('u-username').value.trim();
-  const password = document.getElementById('u-password').value;
-  if (!username || !password) { showToast("Username va parol kerak", 'error'); return; }
-  const res = await POST('/users', {
+async function submitUser(){
+  const username=document.getElementById('u-username').value.trim();
+  const password=document.getElementById('u-password').value;
+  if(!username||!password){showToast("Username va parol kerak",'error');return;}
+  const res=await POST('/users',{
     username, password,
-    name: document.getElementById('u-name').value.trim() || username,
-    role: document.getElementById('u-role').value,
+    name:document.getElementById('u-name').value.trim()||username,
+    role:document.getElementById('u-role').value,
   });
-  if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
-  showToast("Foydalanuvchi qo'shildi", 'success');
-  closeModal('modal-user');
-  loadAdmin();
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast("Foydalanuvchi qo'shildi",'success');
+  closeModal('modal-user'); loadAdmin();
+}
+async function deleteUser(id){
+  if(!confirm("Foydalanuvchini o'chirishni tasdiqlaysizmi?")) return;
+  const res=await DEL('/users/'+id);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast("O'chirildi"); loadAdmin();
 }
 
-async function deleteUser(id) {
-  if (!confirm("Foydalanuvchini o'chirishni tasdiqlaysizmi?")) return;
-  console.log('Deleting user:', { id, endpoint: '/users/' + id });
-  
-  const res = await DEL('/users/' + id);
-  console.log('Delete response:', res);
-  
-  if (!res || res.error) { 
-    showToast(res?.error || 'Xatolik', 'error'); 
-    return; 
-  }
-  
-  showToast("O'chirildi");
-  loadAdmin();
-}
+// ── Modal helpers ──────────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).style.display='flex';}
+function closeModal(id){document.getElementById(id).style.display='none';}
+function bgClose(e,id){if(e.target.id===id) closeModal(id);}
 
-// ── Modal helpers ─────────────────────────────────────────────────────────────
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function bgClose(e, id) { if (e.target.id === id) closeModal(id); }
-
-function openAddAnimalModal() {
-  document.getElementById('animal-modal-title').textContent = "Mol qo'shish";
-  document.getElementById('animal-edit-id').value = '';
-  ['a-tag','a-name','a-notes'].forEach(i => document.getElementById(i).value = '');
-  document.getElementById('a-type').value   = 'sigir';
-  document.getElementById('a-gender').value = 'female';
-  document.getElementById('a-status').value = 'sut_beradi';
-  document.getElementById('a-births').value = 0;
-  document.getElementById('a-milk').value   = 0;
-  document.getElementById('a-bdate').value  = '';
-  openModal('modal-animal');
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
+// ── Toast ──────────────────────────────────────────────────────────────────────
 let toastTimer;
-function showToast(msg, type = '') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show' + (type ? ' ' + type : '');
+function showToast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='show'+(type?' '+type:'');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.className = '', 2800);
+  toastTimer=setTimeout(()=>el.className='',2800);
 }
 
-// ── Keyboard shortcuts ────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-  }
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') login();
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') document.querySelectorAll('.modal-overlay').forEach(m=>m.style.display='none');
+  if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') login();
 });
 
-// ── Modal default dates ───────────────────────────────────────────────────────
-document.getElementById('modal-milk').addEventListener('click', async () => {
-  if (!document.getElementById('m-date').value) document.getElementById('m-date').value = today();
-  
-  // Mollarni selectiga yuklash
-  const animals = await GET('/animals');
-  if (animals) {
-    const select = document.getElementById('m-animal');
-    select.innerHTML = '<option value="">Molni tanlang...</option>' + 
-      animals.map(a => `<option value="${a.id}">${a.tag_number} ${a.name ? '· ' + a.name : ''}</option>`).join('');
-  }
-});
-document.getElementById('modal-milk-sale').addEventListener('click', () => {
-  if (!document.getElementById('ms-date').value) document.getElementById('ms-date').value = today();
-});
-document.getElementById('modal-expense').addEventListener('click', () => {
-  if (!document.getElementById('e-date').value) document.getElementById('e-date').value = today();
-});
-['m-liters','m-price'].forEach(id => document.getElementById(id).addEventListener('input', calcMilkTotal));
-['ms-liters','ms-price'].forEach(id => document.getElementById(id).addEventListener('input', calcMilkSaleTotal));
-
-// Init
-document.getElementById('m-date').value = today();
-document.getElementById('e-date').value = today();
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('milk-date').value=today();
+document.getElementById('e-date').value=today();
+document.getElementById('ms-date').value=today();
 initAuth();
 </script>
 </body>
