@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FermaApp - Ferma Boshqaruvi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray: #6b7280;
+            --light: #f3f4f6;
+            --white: #ffffff;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Login Styles */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        /* App Layout */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+            background: #f9fafb;
+        }
+
+        .app-header {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn:hover {
+            background: var(--light);
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .user-role {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 24px 0;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 32px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* Tables */
+        .table-container {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-gray {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        /* Forms */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 24px 24px 0;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 0 24px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            background: var(--secondary);
+            color: var(--white);
+        }
+
+        .toast-error {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .header-nav {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            .table {
+                min-width: 600px;
+            }
+
+            .modal-content {
+                margin: 0;
+                border-radius: 16px 16px 0 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-nav {
+                flex-wrap: wrap;
+            }
+
+            .nav-btn {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>FermaApp</h1>
+                <p>Ferma boshqaruvi tizimi</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Login</label>
+                    <input type="text" id="username" class="form-input" placeholder="Login kiriting" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Parol</label>
+                    <input type="password" id="password" class="form-input" placeholder="Parolni kiriting" required>
+                </div>
+                <div id="loginError" style="color: var(--danger); margin-bottom: 16px; font-size: 0.9rem;"></div>
+                <button type="submit" class="btn btn-primary">
+                    Kirish
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="appContainer" class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="header-logo">
+                        <span> FermaApp</span>
+                    </div>
+                    <nav class="header-nav">
+                        <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+                        <button class="nav-btn" data-page="animals">Mollar</button>
+                        <button class="nav-btn" data-page="milk">Sut yig'ish</button>
+                        <button class="nav-btn" data-page="milk-sales">Sut sotuvi</button>
+                        <button class="nav-btn" data-page="expenses">Harajatlar</button>
+                        <button class="nav-btn" data-page="finance">Moliya</button>
+                        <button class="nav-btn" data-page="admin" id="adminNav" style="display: none;">Admin</button>
+                    </nav>
+                    <div class="header-user">
+                        <div class="user-info">
+                            <div class="user-name" id="userName">User</div>
+                            <div class="user-role" id="userRole">Role</div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="logout()">Chiqish</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #dbeafe; color: #1e40af;">
+                                <span>  </span>
+                            </div>
+                            <div class="stat-value" id="animalCount">0</div>
+                            <div class="stat-label">Mollar soni</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #d1fae5; color: #065f46;">
+                                <span> </span>
+                            </div>
+                            <div class="stat-value" id="milkToday">0 L</div>
+                            <div class="stat-label">Bugungi sut</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #fef3c7; color: #92400e;">
+                                <span> </span>
+                            </div>
+                            <div class="stat-value" id="expenseToday">0 so'm</div>
+                            <div class="stat-label">Bugungi harajat</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #ede9fe; color: #6b21a8;">
+                                <span> </span>
+                            </div>
+                            <div class="stat-value" id="milk7Days">0 L</div>
+                            <div class="stat-label">7 kunlik sut</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">7 kunlik sut statistikasi</h3>
+                        </div>
+                        <canvas id="milkChart" width="400" height="200"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Top 10 mol (7 kunlik o'rtacha sut)</h3>
+                        </div>
+                        <div id="animalMilkChart"></div>
+                    </div>
+                </div>
+
+                <!-- Other pages will be added here -->
+                <div id="animalsPage" class="page">
+                    <h2>Mollar</h2>
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3 class="table-title">Mollar ro'yxati</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-primary" onclick="openAddAnimalModal()">Mol qo'shish</button>
+                            </div>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Quloq raqami</th>
+                                    <th>Nomi</th>
+                                    <th>Turi</th>
+                                    <th>Jinsi</th>
+                                    <th>Status</th>
+                                    <th>Kunlik sut (L)</th>
+                                    <th>Amallar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="animalsTableBody">
+                                <!-- Animals will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Add other pages similarly -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // App State
+        const S = {
+            token: null,
+            user: null,
+            page: 'dashboard',
+            animals: [],
+            milkRecords: []
+        };
+
+        // API Functions
+        async function api(method, path, body) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (S.token) headers['x-session-token'] = S.token;
+            const opts = { method, headers, credentials: 'include' };
+            if (body) opts.body = JSON.stringify(body);
+            try {
+                const r = await fetch('/api' + path, opts);
+                const data = await r.json();
+                if (r.status === 401) { logout(); return null; }
+                return data;
+            } catch { showToast("Server bilan bog'liqlik xatosi", 'error'); return null; }
+        }
+        const GET = p => api('GET', p);
+        const POST = (p, b) => api('POST', p, b);
+        const PUT = (p, b) => api('PUT', p, b);
+        const DEL = p => api('DELETE', p);
+
+        // Toast Notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast toast-${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Login/Logout
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const data = await POST('/login', { username, password });
+            if (!data || data.error) {
+                document.getElementById('loginError').textContent = data?.error || 'Xatolik';
+                return;
+            }
+            
+            S.token = data.token;
+            S.user = data.user;
+            showApp();
+        });
+
+        function logout() {
+            POST('/logout');
+            S.token = null;
+            S.user = null;
+            showLogin();
+        }
+
+        function showLogin() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('userName').textContent = S.user.name || S.user.username;
+            document.getElementById('userRole').textContent = S.user.role === 'admin' ? 'Admin' : 'Ishchi';
+            
+            if (S.user.role === 'admin') {
+                document.getElementById('adminNav').style.display = 'block';
+            }
+            
+            loadDashboard();
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = btn.dataset.page;
+                switchPage(page);
+            });
+        });
+
+        function switchPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(pageName + 'Page').classList.add('active');
+            document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+            
+            S.page = pageName;
+            
+            // Load page data
+            switch(pageName) {
+                case 'dashboard': loadDashboard(); break;
+                case 'animals': loadAnimals(); break;
+                // Add other page loaders
+            }
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            const data = await GET('/dashboard');
+            if (!data) return;
+            
+            document.getElementById('animalCount').textContent = data.animalCount;
+            document.getElementById('milkToday').textContent = data.milkToday.toFixed(1) + ' L';
+            document.getElementById('expenseToday').textContent = data.expenseToday.toLocaleString() + ' so\'m';
+            
+            const total7Days = data.milk7Days.reduce((sum, day) => sum + day.liters, 0);
+            document.getElementById('milk7Days').textContent = total7Days.toFixed(1) + ' L';
+            
+            // Draw chart
+            drawMilkChart(data.milk7Days);
+            drawAnimalMilkChart(data.animalMilkChart);
+        }
+
+        function drawMilkChart(data) {
+            const canvas = document.getElementById('milkChart');
+            const ctx = canvas.getContext('2d');
+            
+            // Simple chart implementation
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const maxValue = Math.max(...data.map(d => d.liters));
+            const barWidth = canvas.width / data.length * 0.8;
+            const barGap = canvas.width / data.length * 0.2;
+            
+            data.forEach((day, index) => {
+                const barHeight = (day.liters / maxValue) * (canvas.height - 40);
+                const x = index * (barWidth + barGap) + barGap/2;
+                const y = canvas.height - barHeight - 20;
+                
+                ctx.fillStyle = '#2563eb';
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                ctx.fillStyle = '#374151';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(day.liters.toFixed(1) + 'L', x + barWidth/2, y - 5);
+                ctx.fillText(new Date(day.date).toLocaleDateString(), x + barWidth/2, canvas.height - 5);
+            });
+        }
+
+        function drawAnimalMilkChart(data) {
+            const container = document.getElementById('animalMilkChart');
+            container.innerHTML = data.map(animal => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+                    <div>
+                        <strong>${animal.tag_number}</strong> - ${animal.name || 'Nomsiz'}
+                        <div style="font-size: 0.8rem; color: var(--gray);">${animal.milk_days} kun sut berdi</div>
+                    </div>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">
+                        ${animal.avg_milk.toFixed(1)} L
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Animals
+        async function loadAnimals() {
+            const animals = await GET('/animals');
+            if (!animals) return;
+            
+            S.animals = animals;
+            const tbody = document.getElementById('animalsTableBody');
+            tbody.innerHTML = animals.map(animal => `
+                <tr>
+                    <td>${animal.tag_number}</td>
+                    <td>${animal.name || 'Nomsiz'}</td>
+                    <td>${animal.type}</td>
+                    <td>${animal.gender}</td>
+                    <td><span class="badge badge-${getStatusColor(animal.status)}">${animal.status}</span></td>
+                    <td>${animal.daily_milk}</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="editAnimal('${animal.id}')">Tahrir</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAnimal('${animal.id}')">O'chirish</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'sut beradi': return 'green';
+                case 'kasal': return 'yellow';
+                case 'qochqoq': return 'blue';
+                default: return 'gray';
+            }
+        }
+
+        function openAddAnimalModal() {
+            // Modal implementation
+            showToast('Mol qo\'shish modalini hali amalga oshirmadik', 'error');
+        }
+
+        function editAnimal(id) {
+            showToast('Tahrirlash hali amalga oshirmadik', 'error');
+        }
+
+        async function deleteAnimal(id) {
+            if (!confirm("Molni o'chirishni tasdiqlaysizmi?")) return;
+            const res = await DEL('/animals/' + id);
+            if (!res || res.error) { showToast(res?.error || 'Xatolik', 'error'); return; }
+            showToast("O'chirildi");
+            loadAnimals();
+        }
+
+        // Initialize
+        async function initAuth() {
+            const res = await GET('/me');
+            if (!res || res.error) return showLogin();
+            S.user = res;
+            showApp();
+        }
+
+        // Start app
+        initAuth();
+    </script>
+</body>
+</html>

@@ -50,6 +50,8 @@ async function initDB() {
         births INTEGER DEFAULT 0,
         daily_milk DECIMAL(5,2) DEFAULT 0,
         birth_date DATE,
+        heat_date DATE,
+        last_calving_date DATE,
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -296,14 +298,21 @@ const routes = {
       return json(res, { error: `"${data.tag_number}" quloq raqami allaqachon mavjud! Boshqa raqam kiriting.` }, 400);
     }
     
+    // Jins tekshiruvi - buqa va erkak hayvonlar qochish vaqtiga ega bo'lmasligi kerak
+    if (data.gender === 'buqa' || data.gender === 'erkak') {
+      if (data.heat_date) {
+        return json(res, { error: 'Buqa va erkak hayvonlar uchun qochish vaqtini kiritishingiz shart emas' }, 400);
+      }
+    }
+    
     const id = uuid();
     
     try {
       await pool.query(`
-        INSERT INTO animals (id, tag_number, name, type, gender, status, births, daily_milk, birth_date, notes, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO animals (id, tag_number, name, type, gender, status, births, daily_milk, birth_date, heat_date, last_calving_date, notes, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `, [id, data.tag_number, data.name, data.type, data.gender, data.status, 
-          data.births || 0, data.daily_milk || 0, data.birth_date, data.notes]);
+          data.births || 0, data.daily_milk || 0, data.birth_date, data.heat_date || null, data.last_calving_date || null, data.notes]);
       
       const result = await pool.query('SELECT * FROM animals WHERE id = $1', [id]);
       json(res, result.rows[0]);
@@ -328,10 +337,10 @@ const routes = {
     try {
       await pool.query(`
         UPDATE animals SET tag_number = $1, name = $2, type = $3, gender = $4, status = $5,
-        births = $6, daily_milk = $7, birth_date = $8, notes = $9, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $10
+        births = $6, daily_milk = $7, birth_date = $8, heat_date = $9, last_calving_date = $10, notes = $11, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $12
       `, [data.tag_number, data.name, data.type, data.gender, data.status,
-          data.births || 0, data.daily_milk || 0, data.birth_date, data.notes, id]);
+          data.births || 0, data.daily_milk || 0, data.birth_date, data.heat_date || null, data.last_calving_date || null, data.notes, id]);
       
       const result = await pool.query('SELECT * FROM animals WHERE id = $1', [id]);
       json(res, result.rows[0]);
@@ -671,12 +680,42 @@ const routes = {
     });
   },
 
+  // Daily milk tracking
+  'GET:/milk/daily': async (req, res) => {
+    const user = await auth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    const { date = new Date().toISOString().split('T')[0] } = new URL(req.url, 'http://localhost').searchParams;
+    
+    try {
+      const result = await pool.query(`
+        SELECT 
+          a.id,
+          a.tag_number,
+          a.name,
+          a.daily_milk as expected_milk,
+          COALESCE(SUM(mr.liters), 0) as actual_milk,
+          COUNT(mr.id) as sessions
+        FROM animals a
+        LEFT JOIN milk_records mr ON a.id = mr.animal_id AND mr.date = $1
+        WHERE a.status != 'sotildi'
+        GROUP BY a.id, a.tag_number, a.name, a.daily_milk
+        ORDER BY a.tag_number
+      `, [date]);
+      
+      json(res, result.rows);
+    } catch (error) {
+      console.error('Daily milk tracking error:', error);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
+    }
+  },
+
   // Dashboard stats
   'GET:/dashboard': async (req, res) => {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const [animalCount, milkToday, milk7Days, expenseToday] = await Promise.all([
+    const [animalCount, milkToday, milk7Days, expenseToday, animalMilkChart] = await Promise.all([
       pool.query('SELECT COUNT(*) as count FROM animals WHERE status != $1', ['sotildi']),
       pool.query('SELECT COALESCE(SUM(liters), 0) as total FROM milk_records WHERE date = CURRENT_DATE'),
       pool.query(`
@@ -686,14 +725,35 @@ const routes = {
         GROUP BY date 
         ORDER BY date
       `),
-      pool.query('SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE date = CURRENT_DATE')
+      pool.query('SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE date = CURRENT_DATE'),
+      pool.query(`
+        SELECT 
+          a.tag_number,
+          a.name,
+          COALESCE(AVG(mr.liters), 0) as avg_milk_7days,
+          COUNT(DISTINCT mr.date) as milk_days
+        FROM animals a
+        LEFT JOIN milk_records mr ON a.id = mr.animal_id 
+          AND mr.date >= CURRENT_DATE - INTERVAL '7 days'
+        WHERE a.status != 'sotildi' AND a.gender IN ('sigir', 'cow')
+        GROUP BY a.id, a.tag_number, a.name
+        HAVING COALESCE(AVG(mr.liters), 0) > 0
+        ORDER BY avg_milk_7days DESC
+        LIMIT 10
+      `)
     ]);
     
     json(res, {
       animalCount: parseInt(animalCount.rows[0].count),
       milkToday: parseFloat(milkToday.rows[0].total),
       milk7Days: milk7Days.rows.map(r => ({ date: r.date, liters: parseFloat(r.liters) })),
-      expenseToday: parseFloat(expenseToday.rows[0].total)
+      expenseToday: parseFloat(expenseToday.rows[0].total),
+      animalMilkChart: animalMilkChart.rows.map(r => ({
+        tag_number: r.tag_number,
+        name: r.name,
+        avg_milk: parseFloat(r.avg_milk_7days),
+        milk_days: parseInt(r.milk_days)
+      }))
     });
   }
 };
@@ -730,23 +790,54 @@ const server = http.createServer(async (req, res) => {
   // API routes
   if (pathname.startsWith('/api/')) {
     const apiPath = pathname.replace('/api', '');
-    const routeKey = `${method}:${apiPath}`;
     
-    console.log('API Request:', { method, pathname, apiPath, routeKey, routeExists: !!routes[routeKey] });
+    // Try exact match first
+    let routeKey = `${method}:${apiPath}`;
+    let routeHandler = routes[routeKey];
     
-    if (routes[routeKey]) {
+    // If no exact match, try pattern matching
+    if (!routeHandler) {
+      for (const [pattern, handler] of Object.entries(routes)) {
+        if (pattern.startsWith(method + ':')) {
+          const patternPath = pattern.substring(method.length + 1);
+          if (matchPath(patternPath, apiPath)) {
+            routeHandler = handler;
+            routeKey = pattern;
+            break;
+          }
+        }
+      }
+    }
+    
+    console.log('API Request:', { method, pathname, apiPath, routeKey, routeExists: !!routeHandler });
+    
+    if (routeHandler) {
       try {
-        await routes[routeKey](req, res);
+        await routeHandler(req, res);
       } catch (error) {
         console.error('API Error:', error);
         json(res, { error: 'Server error' }, 500);
       }
     } else {
-      console.log('Route not found:', { method, pathname, apiPath, routeKey, availableRoutes: Object.keys(routes).filter(k => k.startsWith(method)) });
+      console.log('Route not found:', { method, pathname, apiPath, availableRoutes: Object.keys(routes).filter(k => k.startsWith(method)) });
       json(res, { error: 'Route not found' }, 404);
     }
     return;
   }
+
+// Helper function for path pattern matching
+function matchPath(pattern, path) {
+  const patternParts = pattern.split('/');
+  const pathParts = path.split('/');
+  
+  if (patternParts.length !== pathParts.length) {
+    return false;
+  }
+  
+  return patternParts.every((part, index) => {
+    return part.startsWith(':') || part === pathParts[index];
+  });
+}
   
   // Static files
   if (pathname === '/') {
