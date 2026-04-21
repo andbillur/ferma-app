@@ -272,15 +272,24 @@ const routes = {
     
     // Agar quloq raqam o'zgarmagan bo'lsa, tekshirish shart emas
     if (currentTag !== d.tag_number) {
-      console.log('Tag changed, checking uniqueness...');
-      const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
-      console.log('Uniqueness check result:', ex.rows);
-      if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
+      console.log('Tag changed from', currentTag, 'to', d.tag_number, 'checking uniqueness...');
+      
+      // Barcha animals larni ko'rish uchun debug
+      const allAnimals = await pool.query('SELECT id, tag_number, name FROM animals ORDER BY tag_number');
+      console.log('All animals in database:', allAnimals.rows);
+      
+      const ex = await pool.query('SELECT id, tag_number, name FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
+      console.log('Uniqueness check result for tag', d.tag_number, ':', ex.rows);
+      if (ex.rows.length > 0) {
+        console.log('Tag', d.tag_number, 'already exists for animal:', ex.rows[0]);
+        return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud (mol: ${ex.rows[0].name || 'nomalum'})` }, 400);
+      }
+      console.log('Tag', d.tag_number, 'is unique, proceeding with update');
     } else {
       console.log('Tag not changed, skipping uniqueness check');
     }
     try {
-      await pool.query(`UPDATE animals SET tag_number=$1,name=$2,type=$3,gender=$4,status=$5,births=$6,daily_milk=$7,birth_date=$8,last_calving_date=$9,insemination_date=$10,notes=$11,updated_at=CURRENT_TIMESTAMP WHERE id=$12`,
+      await pool.query(`UPDATE animals SET tag_number=$1,name=$2,type=$3,gender=$4,status=$5,births=$6,daily_milk=$7,birth_date=$8,last_calving_date=$9,insemination_date=$10,notes=$11 WHERE id=$12`,
         [d.tag_number,d.name||null,d.type,d.gender,d.status,d.births||0,d.daily_milk||0,d.birth_date||null,d.last_calving_date||null,d.insemination_date||null,d.notes||null,id]);
       const r = await pool.query('SELECT * FROM animals WHERE id=$1', [id]);
       json(res, r.rows[0]);
