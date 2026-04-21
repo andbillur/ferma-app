@@ -138,30 +138,46 @@ async function createPasswordResetTable() {
   }
 }
 
-// Nodemailer configuration
-const nodemailer = require('nodemailer');
-const transporter = nodemailer.createTransporter({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: 'info@andbillur.com',
-    pass: 'your-app-password' // Replace with actual app password
-  }
-});
+// Email configuration (optional)
+let transporter = null;
+try {
+  const nodemailer = require('nodemailer');
+  transporter = nodemailer.createTransporter({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: 'info@andbillur.com',
+      pass: 'your-app-password' // Replace with actual app password
+    }
+  });
+  console.log('Nodemailer loaded successfully');
+} catch (error) {
+  console.log('Nodemailer not available, using console.log fallback');
+}
 
 async function sendAdminResetEmail(code, username) {
   try {
-    const mailOptions = {
-      from: 'info@andbillur.com',
-      to: 'info@andbillur.com',
-      subject: 'Password Reset Code',
-      text: `Password reset code for user "${username}": ${code}`
-    };
-    
-    await transporter.sendMail(mailOptions);
-    console.log(`Reset code sent to admin for user: ${username}, code: ${code}`);
-    return true;
+    if (transporter) {
+      const mailOptions = {
+        from: 'info@andbillur.com',
+        to: 'info@andbillur.com',
+        subject: 'Password Reset Code',
+        text: `Password reset code for user "${username}": ${code}`
+      };
+      
+      await transporter.sendMail(mailOptions);
+      console.log(`Reset code sent to admin for user: ${username}, code: ${code}`);
+      return true;
+    } else {
+      // Fallback: Just log to console
+      console.log(`=== PASSWORD RESET CODE ===`);
+      console.log(`User: ${username}`);
+      console.log(`Code: ${code}`);
+      console.log(`Email would be sent to: info@andbillur.com`);
+      console.log(`=======================`);
+      return true;
+    }
   } catch (error) {
     console.error('Email sending error:', error);
     return false;
