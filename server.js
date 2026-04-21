@@ -260,25 +260,14 @@ const routes = {
     console.log('ID length:', id.length);
     if (!d.tag_number) return json(res, { error: 'Quloq raqami kerak' }, 400);
     
-    // First check if animal exists
-    console.log('Querying database for ID:', id);
-    
-    // Debug: List all animals to see what's in the database
-    const allAnimals = await pool.query('SELECT id, tag_number FROM animals LIMIT 5');
-    console.log('All animals in database (first 5):', allAnimals.rows);
-    
-    const existing = await pool.query('SELECT * FROM animals WHERE id=$1', [id]);
-    console.log('Database query result count:', existing.rows.length);
-    console.log('Database query result:', existing.rows);
-    if (existing.rows.length === 0) {
-      console.log('Animal not found in database for ID:', id);
-      return json(res, { error: 'Bu ID li mol topilmadi' }, 404);
-    }
-    
-    console.log('Animal exists:', existing.rows[0].tag_number);
+    // Skip existence check for now - try direct update
+    console.log('Attempting direct update for ID:', id);
     
     // Faqat boshqa molga tegishli bo'lsa tekshiramiz
-    const currentTag = existing.rows[0]?.tag_number;
+    // Get current tag for uniqueness check
+    const current = await pool.query('SELECT tag_number FROM animals WHERE id=$1', [id]);
+    const currentTag = current.rows[0]?.tag_number;
+    console.log('Current tag from DB:', currentTag);
     console.log('PUT animals current tag:', currentTag, 'new tag:', d.tag_number);
     
     // Agar quloq raqam o'zgarmagan bo'lsa, tekshirish shart emas
