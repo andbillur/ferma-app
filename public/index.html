@@ -886,7 +886,7 @@ function filterAnimals() {
   const status = document.getElementById('animal-status-filter').value;
   let list = S.animals;
   if (status !== 'all') list = list.filter(a => a.status === status);
-  if (q) list = list.filter(a => a.tag.toLowerCase().includes(q) || (a.name || '').toLowerCase().includes(q));
+  if (q) list = list.filter(a => (a.tag_number || a.tag || '').toLowerCase().includes(q) || (a.name || '').toLowerCase().includes(q));
   renderAnimalGrid(list);
 }
 

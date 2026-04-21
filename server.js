@@ -302,7 +302,7 @@ const routes = {
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
     const { date, limit = 50 } = new URL(req.url, 'http://localhost').searchParams;
-    let query = 'SELECT mr.*, a.tag_number, a.name FROM milk_records mr JOIN animals a ON mr.animal_id = a.id';
+    let query = 'SELECT mr.*, a.tag_number, a.name FROM milk_records mr LEFT JOIN animals a ON mr.animal_id = a.id';
     const params = [];
     
     if (date) {
@@ -427,6 +427,44 @@ const routes = {
     json(res, { success: true });
   },
 
+  // Users (Admin)
+  'GET:/users': async (req, res) => {
+    const user = await adminAuth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    const result = await pool.query('SELECT id, username, role, name, created_at FROM users ORDER BY created_at DESC');
+    json(res, result.rows);
+  },
+
+  'POST:/users': async (req, res) => {
+    const user = await adminAuth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    const data = await parseBody(req);
+    const id = uuid();
+    
+    try {
+      await pool.query(`
+        INSERT INTO users (id, username, password, role, name)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [id, data.username, hashPassword(data.password), data.role, data.name]);
+      
+      const result = await pool.query('SELECT id, username, role, name, created_at FROM users WHERE id = $1', [id]);
+      json(res, result.rows[0]);
+    } catch (error) {
+      json(res, { error: 'Username allaqachon mavjud' }, 400);
+    }
+  },
+
+  'DELETE:/users/:id': async (req, res) => {
+    const user = await adminAuth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    json(res, { success: true });
+  },
+
   // Finance stats
   'GET:/finance': async (req, res) => {
     const user = await auth(req);
@@ -442,15 +480,15 @@ const routes = {
       case 'year': dateCondition = "AND date >= CURRENT_DATE - INTERVAL '365 days'"; break;
     }
     
-    const [milkResult, expenseResult] = await Promise.all([
-      pool.query(`SELECT COALESCE(SUM(total), 0) as total FROM milk_records WHERE 1=1 ${dateCondition}`),
+    const [milkSalesResult, expenseResult] = await Promise.all([
+      pool.query(`SELECT COALESCE(SUM(total), 0) as total FROM milk_sales WHERE 1=1 ${dateCondition}`),
       pool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE 1=1 ${dateCondition}`)
     ]);
     
     json(res, {
-      income: parseFloat(milkResult.rows[0].total),
+      income: parseFloat(milkSalesResult.rows[0].total),
       expenses: parseFloat(expenseResult.rows[0].total),
-      profit: parseFloat(milkResult.rows[0].total) - parseFloat(expenseResult.rows[0].total)
+      profit: parseFloat(milkSalesResult.rows[0].total) - parseFloat(expenseResult.rows[0].total)
     });
   },
 
