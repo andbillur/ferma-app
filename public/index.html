@@ -853,6 +853,18 @@ async function submitAnimal(){
       return;
     }
     console.log('Updating animal with ID:', editId);
+    
+    // Check if tag number conflicts with existing animal
+    if (body.tag_number) {
+      console.log('All animals:', S.animals.map(a => ({ id: a.id, tag_number: a.tag_number, name: a.name })));
+      const conflictAnimal = S.animals.find(a => a.tag_number === body.tag_number && a.id !== editId);
+      if (conflictAnimal) {
+        console.log('Conflict found:', conflictAnimal);
+        showToast(`${body.tag_number} raqami "${conflictAnimal.name || 'nomalum'}" moliga tegishli (ID: ${conflictAnimal.id})`, 'error');
+        return;
+      }
+    }
+    
     const res=await PUT('/animals/'+editId,body);
     if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
     showToast('Saqlandi','success');
