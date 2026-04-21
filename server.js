@@ -257,8 +257,15 @@ const routes = {
     const d = await parseBody(req);
     console.log('PUT /animals/:id data:', { id, data: d });
     if (!d.tag_number) return json(res, { error: 'Quloq raqami kerak' }, 400);
-    const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
-    if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
+    // Faqat boshqa molga tegishli bo'lsa tekshiramiz
+    const current = await pool.query('SELECT tag_number FROM animals WHERE id=$1', [id]);
+    const currentTag = current.rows[0]?.tag_number;
+    
+    // Agar quloq raqam o'zgarmagan bo'lsa, tekshirish shart emas
+    if (currentTag !== d.tag_number) {
+      const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
+      if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
+    }
     try {
       await pool.query(`UPDATE animals SET tag_number=$1,name=$2,type=$3,gender=$4,status=$5,births=$6,daily_milk=$7,birth_date=$8,last_calving_date=$9,insemination_date=$10,notes=$11,updated_at=CURRENT_TIMESTAMP WHERE id=$12`,
         [d.tag_number,d.name||null,d.type,d.gender,d.status,d.births||0,d.daily_milk||0,d.birth_date||null,d.last_calving_date||null,d.insemination_date||null,d.notes||null,id]);
