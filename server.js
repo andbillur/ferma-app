@@ -275,10 +275,6 @@ const routes = {
   // ADMIN PASSWORD RESET
   'POST:/admin/password-reset-request': async (req, res) => {
     try {
-      const admin = await auth(req);
-      if (!admin || admin.role !== 'admin') {
-        return json(res, { error: 'Unauthorized' }, 401);
-      }
       
       const { username } = await parseBody(req);
       
@@ -331,10 +327,6 @@ const routes = {
 
   'POST:/admin/password-reset-confirm': async (req, res) => {
     try {
-      const admin = await auth(req);
-      if (!admin || admin.role !== 'admin') {
-        return json(res, { error: 'Unauthorized' }, 401);
-      }
       
       const { username, code, newPassword } = await parseBody(req);
       
