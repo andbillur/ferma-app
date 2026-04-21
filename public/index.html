@@ -567,36 +567,6 @@ const PUT  = (p,b) => api('PUT',p,b);
 const DEL  = p     => api('DELETE',p);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-// Global login function for onclick
-window.login = async function() {
-  try {
-    const username = document.getElementById('l-username').value.trim();
-    const password = document.getElementById('l-password').value;
-    const errEl = document.getElementById('login-err');
-    
-    if (errEl) errEl.textContent = '';
-    
-    if (!username || !password) { 
-      if (errEl) errEl.textContent = 'Login va parolni kiriting'; 
-      return; 
-    }
-    
-    const data = await POST('/login', { username, password });
-    if (!data || data.error) { 
-      if (errEl) errEl.textContent = data?.error || 'Xatolik'; 
-      return; 
-    }
-    
-    S.token = data.token;
-    S.user  = data.user;
-    setToken(data.token);
-    showApp();
-  } catch (error) {
-    console.error('Login error:', error);
-    const errEl = document.getElementById('login-err');
-    if (errEl) errEl.textContent = 'Login xatosi. Qayta urinib ko\'ring.';
-  }
-};
 
 async function initAuth(){
   S.token=getToken();
@@ -1234,6 +1204,37 @@ document.getElementById('milk-date').value=today();
 document.getElementById('e-date').value=today();
 document.getElementById('ms-date').value=today();
 initAuth();
+
+// Global login function for onclick
+window.login = async function() {
+  try {
+    const username = document.getElementById('l-username').value.trim();
+    const password = document.getElementById('l-password').value;
+    const errEl = document.getElementById('login-err');
+    
+    if (errEl) errEl.textContent = '';
+    
+    if (!username || !password) { 
+      if (errEl) errEl.textContent = 'Login va parolni kiriting'; 
+      return; 
+    }
+    
+    const data = await POST('/login', { username, password });
+    if (!data || data.error) { 
+      if (errEl) errEl.textContent = data?.error || 'Xatolik'; 
+      return; 
+    }
+    
+    S.token = data.token;
+    S.user  = data.user;
+    setToken(data.token);
+    showApp();
+  } catch (error) {
+    console.error('Login error:', error);
+    const errEl = document.getElementById('login-err');
+    if (errEl) errEl.textContent = 'Login xatosi. Qayta urinib ko\'ring.';
+  }
+};
 </script>
 </body>
 </html>
