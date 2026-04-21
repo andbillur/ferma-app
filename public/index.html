@@ -392,13 +392,25 @@ a{color:inherit;text-decoration:none;}
       <div class="modal-title">Parolni tiklash</div>
       <button class="modal-close" onclick="closeModal('modal-password-reset')">✕</button>
     </div>
-    <div class="form-group"><label>Email</label><input type="email" id="reset-email" placeholder="info@andbillur.com"></div>
-    <div class="form-group"><label>Tasdiqlash kodi</label><input type="text" id="reset-code" placeholder="123456"></div>
-    <div class="form-group"><label>Yangi parol</label><input type="password" id="reset-password" placeholder="Yangi parol"></div>
-    <div class="form-group"><label>Parolni tasdiqlash</label><input type="password" id="reset-confirm" placeholder="Parolni qayta kiriting"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-password-reset')">Bekor</button>
-      <button class="btn btn-primary" style="flex:2" onclick="submitPasswordReset()">Parolni o'zgartirish</button>
+    
+    <!-- Email maydoni -->
+    <div id="reset-step-1">
+      <div class="form-group"><label>Email</label><input type="email" id="reset-email" placeholder="info@andbillur.com"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-password-reset')">Bekor</button>
+        <button class="btn btn-primary" style="flex:2" onclick="requestPasswordReset()">Kod yuborish</button>
+      </div>
+    </div>
+    
+    <!-- Kod va yangi parol maydonlari -->
+    <div id="reset-step-2" style="display:none">
+      <div class="form-group"><label>Tasdiqlash kodi</label><input type="text" id="reset-code" placeholder="123456"></div>
+      <div class="form-group"><label>Yangi parol</label><input type="password" id="reset-password" placeholder="Yangi parol"></div>
+      <div class="form-group"><label>Parolni tasdiqlash</label><input type="password" id="reset-confirm" placeholder="Parolni qayta kiriting"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-password-reset')">Bekor</button>
+        <button class="btn btn-primary" style="flex:2" onclick="submitPasswordReset()">Parolni o'zgartirish</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1254,8 +1266,20 @@ initAuth();
 
 // Password reset functions
 function showPasswordReset() {
-  document.getElementById('login-screen').style.display = 'none';
-  openModal('modal-password-reset');
+  const email = document.getElementById('reset-email').value.trim();
+  
+  if (!email) {
+    showToast('Email manzilini kiriting', 'error');
+    return;
+  }
+  
+  if (!email.includes('@')) {
+    showToast('Noto\'g\'ri email formati', 'error');
+    return;
+  }
+  
+  // Emailga kod yuborish
+  requestPasswordReset();
 }
 
 async function submitPasswordReset() {
@@ -1310,6 +1334,11 @@ async function requestPasswordReset() {
   }
   
   showToast(res.message || 'Tasdiqlash kodi emailingizga yuborildi', 'success');
+  
+  // Kod yuborilgandan keyin 2-qadamni ko'rsatish
+  document.getElementById('reset-step-1').style.display = 'none';
+  document.getElementById('reset-step-2').style.display = 'block';
+  document.getElementById('reset-code').focus();
 }
 
 // Global login function for onclick
