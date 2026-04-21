@@ -143,17 +143,21 @@ let transporter = null;
 try {
   const nodemailer = require('nodemailer');
   transporter = nodemailer.createTransporter({
+    service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
+    port: 465,
+    secure: true,
     auth: {
       user: 'info@andbillur.com',
-      pass: 'your-app-password' // Replace with actual app password
+      pass: process.env.GMAIL_APP_PASSWORD || 'your-app-password' // Use environment variable
+    },
+    tls: {
+      rejectUnauthorized: false
     }
   });
-  console.log('Nodemailer loaded successfully');
+  console.log('✅ Nodemailer loaded successfully with Gmail service');
 } catch (error) {
-  console.log('Nodemailer not available, using console.log fallback');
+  console.log('⚠️  Nodemailer not available, using console.log fallback');
 }
 
 async function sendAdminResetEmail(code, username) {
@@ -279,6 +283,30 @@ const routes = {
     if (token) delete sessions[token];
     res.setHeader('Set-Cookie', 'token=; Path=/; Max-Age=0');
     json(res, { success: true });
+  },
+
+  // TEST EMAIL ENDPOINT
+  'POST:/admin/test-email': async (req, res) => {
+    try {
+      const testCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const emailSent = await sendAdminResetEmail(testCode, 'test-user');
+      
+      if (emailSent) {
+        json(res, { 
+          success: true, 
+          message: 'Test email sent successfully',
+          code: testCode
+        });
+      } else {
+        json(res, { 
+          success: false, 
+          message: 'Failed to send test email'
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Test email error:', error);
+      return json(res, { error: 'Server xatosi: ' + error.message }, 500);
+    }
   },
 
   // ADMIN PASSWORD RESET
@@ -624,21 +652,67 @@ const routes = {
   },
 
   'POST:/milk': async (req, res) => {
-    const u = await auth(req);
-    if (!u) return json(res, { error: 'Unauthorized' }, 401);
-    const d = await parseBody(req);
-    console.log('POST /milk data:', d);
-    if (!d.animal_id) return json(res, { error: 'Molni tanlang' }, 400);
-    if (!d.liters || !d.session) return json(res, { error: 'Litr va sessiya kerak' }, 400);
-    if (d.animal_id) {
-      const dup = await pool.query('SELECT id FROM milk_records WHERE animal_id=$1 AND date=$2 AND session=$3', [d.animal_id, d.date, d.session]);
-      if (dup.rows.length) return json(res, { error: `Bu mol uchun ${d.session}-soqim allaqachon qayd qilingan` }, 400);
+    try {
+      const u = await auth(req);
+      console.log('User authenticated:', u ? 'Yes' : 'No');
+      if (!u) {
+        console.error('User not authenticated for milk submission');
+        return json(res, { error: 'Unauthorized' }, 401);
+      }
+      const d = await parseBody(req);
+      console.log('POST /milk data:', d);
+      console.log('Milk submission data validation:', {
+        hasAnimalId: !!d.animal_id,
+        hasLiters: !!d.liters,
+        hasSession: !!d.session,
+        hasDate: !!d.date,
+        litersValue: d.liters,
+        animalIdValue: d.animal_id
+      });
+      
+      if (!d.animal_id) return json(res, { error: 'Molni tanlang' }, 400);
+      if (!d.liters || !d.session) return json(res, { error: 'Litr va sessiya kerak' }, 400);
+      
+      // Check for duplicate milk records
+      if (d.animal_id) {
+        console.log(`Checking for duplicate milk record for animal: ${d.animal_id}, date: ${d.date}, session: ${d.session}`);
+        const dup = await pool.query('SELECT id FROM milk_records WHERE animal_id=$1 AND date=$2 AND session=$3', [d.animal_id, d.date, d.session]);
+        if (dup.rows.length) {
+          console.log(`Duplicate found: ${dup.rows.length} records`);
+          return json(res, { error: `Bu mol uchun ${d.session}-soqim allaqachon qayd qilingan` }, 400);
+        }
+      }
+      
+      // Insert new milk record
+      const id = uuid();
+      console.log(`Inserting milk record with ID: ${id}`);
+      
+      await pool.query(`INSERT INTO milk_records (id,animal_id,date,session,liters,notes) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [id,d.animal_id||null,d.date,d.session,d.liters,d.notes||null]);
+      
+      console.log(`Milk record inserted successfully`);
+      
+      // Get the inserted record with animal details
+      const r = await pool.query(`SELECT mr.*, a.tag_number, a.name AS animal_name FROM milk_records mr LEFT JOIN animals a ON mr.animal_id=a.id WHERE mr.id=$1`, [id]);
+      
+      if (r.rows[0]) {
+        console.log(`Milk record retrieved successfully: ${r.rows[0].animal_name}`);
+        json(res, r.rows[0]);
+      } else {
+        console.error('Failed to retrieve inserted milk record');
+        return json(res, { error: 'Milk record saqlanmadi' }, 500);
+      }
+      
+    } catch (error) {
+      console.error('Milk submission error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        where: error.where
+      });
+      return json(res, { error: 'Server xatosi: ' + error.message }, 500);
     }
-    const id = uuid();
-    await pool.query(`INSERT INTO milk_records (id,animal_id,date,session,liters,notes) VALUES ($1,$2,$3,$4,$5,$6)`,
-      [id,d.animal_id||null,d.date,d.session,d.liters,d.notes||null]);
-    const r = await pool.query(`SELECT mr.*, a.tag_number, a.name AS animal_name FROM milk_records mr LEFT JOIN animals a ON mr.animal_id=a.id WHERE mr.id=$1`, [id]);
-    json(res, r.rows[0]);
   },
 
   'DELETE:/milk/:id': async (req, res) => {
