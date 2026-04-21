@@ -1,0 +1,30 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "username": "admin",
+      "password": "fbf9c0130069804950f2dcac99e4e435771cd55d6f29cac7cbc1b1aedd0c18fb",
+      "role": "admin",
+      "name": "Admin"
+    }
+  ],
+  "animals": [
+    {
+      "id": "d3edbe69ed1c7f0b690020c4ffde62f5",
+      "tag": "B87",
+      "name": "GoldShteyn",
+      "type": "sigir",
+      "gender": "female",
+      "status": "sut_beradi",
+      "birth_count": 2,
+      "daily_milk": 0,
+      "birth_date": "2024-11-01",
+      "notes": "",
+      "created_at": "2026-04-21T05:08:18.525Z",
+      "created_by": "u1"
+    }
+  ],
+  "milk_records": [],
+  "expenses": [],
+  "animal_sales": []
+}
