@@ -537,12 +537,6 @@ a { color: inherit; text-decoration: none; }
         <label>Jami litr *</label>
         <input type="number" id="m-liters" placeholder="0" step="0.5" min="0">
       </div>
-      <div class="form-group">
-        <label>Mol (quloq raqami)</label>
-        <select id="m-animal">
-          <option value="">Molni tanlang...</option>
-        </select>
-      </div>
     </div>
     <div class="form-group">
       <label>Izoh</label>
@@ -927,12 +921,12 @@ function renderAnimalGrid(list) {
   }
   document.getElementById('animals-grid').innerHTML = list.map(a => `
     <div class="animal-card" onclick="showAnimalDetail('${a.id}')">
-      <div class="animal-tag">#${a.tag}</div>
+      <div class="animal-tag">#${a.tag_number || a.tag}</div>
       ${a.name ? `<div class="animal-name">${a.name}</div>` : ''}
       <div>${statusBadge(a.status)}</div>
       <div class="animal-meta">
         <span class="badge badge-gray">${typeLabel(a.type)}</span>
-        ${a.birth_count > 0 ? `<span class="badge badge-teal">${a.birth_count}x tug'gan</span>` : ''}
+        ${a.births > 0 ? `<span class="badge badge-teal">${a.births}x tug'gan</span>` : ''}
       </div>
       <div class="animal-info">
         <span>${a.birth_date ? fmtDate(a.birth_date) : ''}</span>
@@ -944,14 +938,14 @@ function renderAnimalGrid(list) {
 async function showAnimalDetail(id) {
   const a = S.animals.find(x => x.id === id);
   if (!a) return;
-  document.getElementById('detail-title').textContent = `#${a.tag}${a.name ? ' — ' + a.name : ''}`;
+  document.getElementById('detail-title').textContent = `#${a.tag_number || a.tag}${a.name ? ' — ' + a.name : ''}`;
 
   const body = document.getElementById('animal-detail-body');
   body.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div><div class="text-muted">Holat</div><div style="margin-top:4px">${statusBadge(a.status)}</div></div>
       <div><div class="text-muted">Turi</div><div style="margin-top:4px"><strong>${typeLabel(a.type)}</strong> · ${a.gender === 'female' ? "Urg'ochi" : 'Erkak'}</div></div>
-      <div><div class="text-muted">Tug'ish soni</div><div><strong>${a.birth_count}</strong> marta</div></div>
+      <div><div class="text-muted">Tug'ish soni</div><div><strong>${a.births || 0}</strong> marta</div></div>
       <div><div class="text-muted">Kunlik sut</div><div><strong>${a.daily_milk > 0 ? fmtL(a.daily_milk) : '—'}</strong></div></div>
       ${a.birth_date ? `<div><div class="text-muted">Tug'ilgan</div><div>${fmtDate(a.birth_date)}</div></div>` : ''}
       <div><div class="text-muted">Qo'shilgan</div><div>${fmtDate(a.created_at?.split('T')[0])}</div></div>
@@ -974,12 +968,12 @@ function openEditAnimal(id) {
   if (!a) return;
   document.getElementById('animal-modal-title').textContent = 'Molni tahrirlash';
   document.getElementById('animal-edit-id').value = a.id;
-  document.getElementById('a-tag').value    = a.tag;
+  document.getElementById('a-tag').value    = a.tag_number || a.tag;
   document.getElementById('a-name').value   = a.name || '';
   document.getElementById('a-type').value   = a.type;
   document.getElementById('a-gender').value = a.gender;
   document.getElementById('a-status').value = a.status;
-  document.getElementById('a-births').value = a.birth_count || 0;
+  document.getElementById('a-births').value = a.births || 0;
   document.getElementById('a-milk').value   = a.daily_milk || 0;
   document.getElementById('a-bdate').value  = a.birth_date || '';
   document.getElementById('a-notes').value  = a.notes || '';
@@ -1147,16 +1141,13 @@ async function deleteMilkSale(id) {
 
 async function submitMilk() {
   const liters = parseFloat(document.getElementById('m-liters').value);
-  const animalId = document.getElementById('m-animal').value;
   const session = document.getElementById('m-session').value;
   
   if (!liters) { showToast('Litr miqdorini kiriting', 'error'); return; }
-  if (!animalId) { showToast('Molni tanlang', 'error'); return; }
   
   const res = await POST('/milk', {
     date: document.getElementById('m-date').value || today(),
     session: session,
-    animal_id: animalId,
     liters: liters,
     notes: document.getElementById('m-notes').value,
   });

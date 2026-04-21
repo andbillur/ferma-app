@@ -288,7 +288,7 @@ const routes = {
   },
 
   'DELETE:/animals/:id': async (req, res) => {
-    const user = await adminAuth(req);
+    const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
     const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
