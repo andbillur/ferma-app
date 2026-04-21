@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { Pool } = require('pg');
+const { parse } = require('querystring');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -32,7 +33,9 @@ async function initDB() {
         username VARCHAR(50) UNIQUE NOT NULL,
         password VARCHAR(64) NOT NULL,
         role VARCHAR(20) DEFAULT 'user',
-        name VARCHAR(100)
+        name VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
@@ -48,7 +51,8 @@ async function initDB() {
         daily_milk DECIMAL(5,2) DEFAULT 0,
         birth_date DATE,
         notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
@@ -61,7 +65,9 @@ async function initDB() {
         liters DECIMAL(6,2) NOT NULL,
         price DECIMAL(8,2) NOT NULL,
         total DECIMAL(10,2) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
@@ -72,7 +78,8 @@ async function initDB() {
         amount DECIMAL(10,2) NOT NULL,
         description TEXT,
         date DATE NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
@@ -86,7 +93,8 @@ async function initDB() {
         buyer VARCHAR(100) NOT NULL,
         phone VARCHAR(20),
         notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
@@ -99,9 +107,20 @@ async function initDB() {
         buyer_phone VARCHAR(20),
         date DATE NOT NULL,
         notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // Create indexes for performance
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_animals_tag_number ON animals(tag_number)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_milk_records_date ON milk_records(date)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_milk_records_animal_id ON milk_records(animal_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_milk_sales_date ON milk_sales(date)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_animal_sales_date ON animal_sales(date)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_animal_sales_animal_id ON animal_sales(animal_id)');
     
     // Create default admin user if not exists
     const adminExists = await pool.query('SELECT id FROM users WHERE username = $1', ['admin']);
@@ -109,7 +128,7 @@ async function initDB() {
       const adminId = crypto.randomBytes(16).toString('hex');
       const hashedPassword = crypto.createHash('sha256').update('admin123' + SALT).digest('hex');
       await pool.query(
-        'INSERT INTO users (id, username, password, role, name) VALUES ($1, $2, $3, $4, $5)',
+        'INSERT INTO users (id, username, password, role, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
         [adminId, 'admin', hashedPassword, 'admin', 'Admin']
       );
     }
@@ -142,7 +161,11 @@ function getSession(token) {
 }
 
 function auth(req) {
-  const s = getSession(req.headers['x-session-token']);
+  // Check both header and cookie for token
+  const token = req.headers['x-session-token'] || (req.cookies && req.cookies.token);
+  console.log('Auth token:', token, 'Cookies:', req.cookies);
+  if (!token) return null;
+  const s = getSession(token);
   if (!s) return null;
   return pool.query('SELECT * FROM users WHERE id = $1', [s.userId])
     .then(result => result.rows[0] || null)
@@ -212,6 +235,22 @@ const routes = {
     
     const user = result.rows[0];
     const token = createSession(user.id);
+    
+    // Set cookie for session persistence
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = [
+      `token=${token}`,
+      'Path=/',
+      'HttpOnly',
+      'SameSite=Lax'
+    ];
+    
+    if (isProduction) {
+      cookieOptions.push('Secure');
+    }
+    
+    res.setHeader('Set-Cookie', cookieOptions.join('; '));
+    
     json(res, { token, user: { id: user.id, username: user.username, role: user.role, name: user.name } });
   },
 
@@ -261,8 +300,8 @@ const routes = {
     
     try {
       await pool.query(`
-        INSERT INTO animals (id, tag_number, name, type, gender, status, births, daily_milk, birth_date, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO animals (id, tag_number, name, type, gender, status, births, daily_milk, birth_date, notes, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `, [id, data.tag_number, data.name, data.type, data.gender, data.status, 
           data.births || 0, data.daily_milk || 0, data.birth_date, data.notes]);
       
@@ -289,7 +328,7 @@ const routes = {
     try {
       await pool.query(`
         UPDATE animals SET tag_number = $1, name = $2, type = $3, gender = $4, status = $5,
-        births = $6, daily_milk = $7, birth_date = $8, notes = $9
+        births = $6, daily_milk = $7, birth_date = $8, notes = $9, updated_at = CURRENT_TIMESTAMP
         WHERE id = $10
       `, [data.tag_number, data.name, data.type, data.gender, data.status,
           data.births || 0, data.daily_milk || 0, data.birth_date, data.notes, id]);
@@ -340,9 +379,9 @@ const routes = {
     
     try {
       await pool.query(`
-        INSERT INTO milk_records (id, animal_id, date, session, liters, notes)
-        VALUES ($1, $2, $3, $4, $5, $6)
-      `, [id, data.animal_id || null, data.date, data.session, data.liters, data.notes || null]);
+        INSERT INTO milk_records (id, animal_id, date, session, liters, price, total, notes, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `, [id, data.animal_id || null, data.date, data.session, data.liters, 0, 0, data.notes || null]);
       
       const result = await pool.query('SELECT * FROM milk_records WHERE id = $1', [id]);
       json(res, result.rows[0]);
@@ -387,11 +426,12 @@ const routes = {
     
     const data = await parseBody(req);
     const id = uuid();
+    const total = data.liters * data.price;
     
     await pool.query(`
-      INSERT INTO milk_sales (id, date, liters, price, total, buyer, phone, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    `, [id, data.date, data.liters, data.price, data.total, data.buyer, data.phone, data.notes]);
+      INSERT INTO milk_sales (id, date, liters, price, total, buyer, phone, notes, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `, [id, data.date, data.liters, data.price, total, data.buyer, data.phone, data.notes]);
     
     const result = await pool.query('SELECT * FROM milk_sales WHERE id = $1', [id]);
     json(res, result.rows[0]);
@@ -424,8 +464,8 @@ const routes = {
     const id = uuid();
     
     await pool.query(`
-      INSERT INTO expenses (id, category, amount, description, date)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO expenses (id, category, amount, description, date, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `, [id, data.category, data.amount, data.description, data.date]);
     
     const result = await pool.query('SELECT * FROM expenses WHERE id = $1', [id]);
@@ -475,8 +515,8 @@ const routes = {
     
     try {
       await pool.query(`
-        INSERT INTO users (id, username, password, role, name)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO users (id, username, password, role, name, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `, [id, data.username, hashPassword(data.password), data.role, data.name]);
       
       const result = await pool.query('SELECT id, username, role, name, created_at FROM users WHERE id = $1', [id]);
@@ -492,6 +532,22 @@ const routes = {
     
     const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
     await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    json(res, { success: true });
+  },
+
+  'POST:/logout': async (req, res) => {
+    const user = await auth(req);
+    if (!user) return json(res, { error: 'Unauthorized' }, 401);
+    
+    // Clear session
+    const token = req.headers['x-session-token'] || (req.cookies && req.cookies.token);
+    if (token) {
+      delete sessions[token];
+    }
+    
+    // Clear cookie
+    res.setHeader('Set-Cookie', 'token=; Path=/; Max-Age=0');
+    
     json(res, { success: true });
   },
 
@@ -549,11 +605,24 @@ const routes = {
   }
 };
 
+// Parse cookies from request
+function parseCookies(req) {
+  const cookie = req.headers.cookie || '';
+  return cookie.split(';').reduce((acc, c) => {
+    const [key, ...rest] = c.trim().split('=');
+    if (key) acc[key.trim()] = rest.join('=').trim();
+    return acc;
+  }, {});
+}
+
 // Server
 const server = http.createServer(async (req, res) => {
   const method = req.method;
   const url = req.url;
   const pathname = new URL(url, 'http://localhost').pathname;
+  
+  // Parse cookies
+  req.cookies = parseCookies(req);
   
   // Handle CORS preflight
   if (method === 'OPTIONS') {
