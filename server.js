@@ -325,7 +325,7 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
+    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
     const data = await parseBody(req);
     
     // Avval quloq raqami boshqa hayvonda mavjudligini tekshiramiz
@@ -353,7 +353,7 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const id = pathname.split('/').pop();
+    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
     console.log('DELETE animal request:', { id, requestedBy: user.username });
     
     if (!id) {
@@ -420,7 +420,7 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const id = pathname.split('/').pop();
+    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
     console.log('DELETE milk record request:', { id, requestedBy: user.username });
     
     if (!id) {
@@ -484,7 +484,7 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const id = pathname.split('/').pop();
+    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
     console.log('DELETE milk sale request:', { id, requestedBy: user.username });
     
     if (!id) {
@@ -536,7 +536,7 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const id = pathname.split('/').pop();
+    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
     console.log('DELETE expense request:', { id, requestedBy: user.username });
     
     if (!id) {
@@ -610,7 +610,7 @@ const routes = {
     const user = await adminAuth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const id = pathname.split('/').pop();
+    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
     console.log('DELETE user request:', { id, requestedBy: user.username });
     
     if (!id) {
