@@ -163,14 +163,17 @@ async function sendAdminResetEmail(code, username) {
         from: 'info@andbillur.com',
         to: 'info@andbillur.com',
         subject: 'Password Reset Code',
-        text: `Password reset code for user "${username}": ${code}`
+        text: `Password reset code for user "${username}": ${code}`,
+        html: `<h2>Password Reset Code</h2><p>Reset code for user <strong>${username}</strong>: <h3>${code}</h3></p><p>This code expires in 10 minutes.</p>`
       };
       
-      await transporter.sendMail(mailOptions);
-      console.log(`Reset code sent to admin for user: ${username}, code: ${code}`);
+      const result = await transporter.sendMail(mailOptions);
+      console.log(`✅ Email sent successfully to admin for user: ${username}, code: ${code}`);
+      console.log(`Message ID: ${result.messageId}`);
       return true;
     } else {
       // Fallback: Just log to console
+      console.log(`⚠️  Nodemailer not available - using console fallback`);
       console.log(`=== PASSWORD RESET CODE ===`);
       console.log(`User: ${username}`);
       console.log(`Code: ${code}`);
@@ -179,7 +182,13 @@ async function sendAdminResetEmail(code, username) {
       return true;
     }
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('❌ Email sending error:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      command: error.command,
+      response: error.response
+    });
     return false;
   }
 }
@@ -290,26 +299,33 @@ const routes = {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
       
+      console.log(`🔐 Password reset request for username: ${username}`);
+      console.log(`📧 Generated code: ${code}`);
+      console.log(`⏰ Expires at: ${expiresAt}`);
+      
       // Save to database
       try {
         await pool.query(
           'INSERT INTO password_resets (username, code, expires_at) VALUES ($1, $2, $3)',
           [username, code, expiresAt]
         );
+        console.log(`✅ Code saved to database for user: ${username}`);
       } catch (dbError) {
-        console.error('Database error saving reset code:', dbError);
+        console.error('❌ Database error saving reset code:', dbError);
         return json(res, { error: 'Database xatosi' }, 500);
       }
       
       // Send email to admin
       try {
+        console.log(`📤 Attempting to send email to admin...`);
         const emailSent = await sendAdminResetEmail(code, username);
         if (!emailSent) {
-          console.error('Failed to send admin email');
+          console.error('❌ Failed to send admin email');
           return json(res, { error: 'Email yuborishda xatolik' }, 500);
         }
+        console.log(`✅ Email sent successfully to admin`);
       } catch (emailError) {
-        console.error('Email service error:', emailError);
+        console.error('❌ Email service error:', emailError);
         return json(res, { error: 'Email xizmatida xatolik' }, 500);
       }
       
