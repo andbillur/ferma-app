@@ -1,159 +1,84 @@
 const http = require('http');
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { Pool } = require('pg');
-const { parse } = require('querystring');
 
-const PORT = process.env.PORT || 3000;
+const PORT       = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const SALT = 'ferma-app-salt-2024';
-const sessions = {};
+const SALT       = 'ferma-app-salt-2024';
+const sessions   = {};
 
-// PostgreSQL connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
-// Fallback to file-based database if PostgreSQL not available
-let USE_POSTGRES = !!process.env.DATABASE_URL;
-
-// Database initialization
 async function initDB() {
-  if (!USE_POSTGRES) {
-    console.log('PostgreSQL not configured. Please set DATABASE_URL environment variable.');
-    return;
-  }
-  
   try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id VARCHAR(32) PRIMARY KEY,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        password VARCHAR(64) NOT NULL,
-        role VARCHAR(20) DEFAULT 'user',
-        name VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS animals (
-        id VARCHAR(32) PRIMARY KEY,
-        tag_number VARCHAR(50) UNIQUE NOT NULL,
-        name VARCHAR(100),
-        type VARCHAR(20),
-        gender VARCHAR(20),
-        status VARCHAR(30),
-        births INTEGER DEFAULT 0,
-        daily_milk DECIMAL(5,2) DEFAULT 0,
-        birth_date DATE,
-        heat_date DATE,
-        last_calving_date DATE,
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS milk_records (
-        id VARCHAR(32) PRIMARY KEY,
-        animal_id VARCHAR(32) REFERENCES animals(id),
-        date DATE NOT NULL,
-        session INTEGER NOT NULL,
-        liters DECIMAL(6,2) NOT NULL,
-        price DECIMAL(8,2) NOT NULL,
-        total DECIMAL(10,2) NOT NULL,
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS expenses (
-        id VARCHAR(32) PRIMARY KEY,
-        category VARCHAR(50) NOT NULL,
-        amount DECIMAL(10,2) NOT NULL,
-        description TEXT,
-        date DATE NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS milk_sales (
-        id VARCHAR(32) PRIMARY KEY,
-        date DATE NOT NULL,
-        liters DECIMAL(6,2) NOT NULL,
-        price DECIMAL(8,2) NOT NULL,
-        total DECIMAL(10,2) NOT NULL,
-        buyer VARCHAR(100) NOT NULL,
-        phone VARCHAR(20),
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS animal_sales (
-        id VARCHAR(32) PRIMARY KEY,
-        animal_id VARCHAR(32) REFERENCES animals(id),
-        price DECIMAL(10,2) NOT NULL,
-        buyer_name VARCHAR(100),
-        buyer_phone VARCHAR(20),
-        date DATE NOT NULL,
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Create indexes for performance
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_animals_tag_number ON animals(tag_number)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_milk_records_date ON milk_records(date)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_milk_records_animal_id ON milk_records(animal_id)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_milk_sales_date ON milk_sales(date)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_animal_sales_date ON animal_sales(date)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_animal_sales_animal_id ON animal_sales(animal_id)');
-    
-    // Create default admin user if not exists
-    const adminExists = await pool.query('SELECT id FROM users WHERE username = $1', ['admin']);
-    if (adminExists.rows.length === 0) {
-      const adminId = crypto.randomBytes(16).toString('hex');
-      const hashedPassword = crypto.createHash('sha256').update('admin123' + SALT).digest('hex');
+    await pool.query(`CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(32) PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL,
+      password VARCHAR(64) NOT NULL, role VARCHAR(20) DEFAULT 'user',
+      name VARCHAR(100), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS animals (
+      id VARCHAR(32) PRIMARY KEY, tag_number VARCHAR(50) UNIQUE NOT NULL,
+      name VARCHAR(100), type VARCHAR(20), gender VARCHAR(20), status VARCHAR(30),
+      births INTEGER DEFAULT 0, daily_milk DECIMAL(5,2) DEFAULT 0,
+      birth_date DATE, last_calving_date DATE, insemination_date DATE,
+      notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+
+    await pool.query(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS insemination_date DATE`).catch(()=>{});
+    await pool.query(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS last_calving_date DATE`).catch(()=>{});
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS milk_records (
+      id VARCHAR(32) PRIMARY KEY,
+      animal_id VARCHAR(32) REFERENCES animals(id) ON DELETE SET NULL,
+      date DATE NOT NULL, session INTEGER NOT NULL, liters DECIMAL(6,2) NOT NULL,
+      notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS milk_sales (
+      id VARCHAR(32) PRIMARY KEY, date DATE NOT NULL,
+      liters DECIMAL(6,2) NOT NULL, price DECIMAL(8,2) NOT NULL,
+      total DECIMAL(10,2) NOT NULL, buyer VARCHAR(100) NOT NULL,
+      phone VARCHAR(20), notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS expenses (
+      id VARCHAR(32) PRIMARY KEY, category VARCHAR(50) NOT NULL,
+      amount DECIMAL(10,2) NOT NULL, description TEXT, date DATE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS animal_sales (
+      id VARCHAR(32) PRIMARY KEY,
+      animal_id VARCHAR(32) REFERENCES animals(id) ON DELETE SET NULL,
+      price DECIMAL(10,2) DEFAULT 0, buyer_name VARCHAR(100),
+      reason VARCHAR(30), weight_kg DECIMAL(6,2), date DATE NOT NULL,
+      notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_milk_date    ON milk_records(date)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_milk_animal  ON milk_records(animal_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ms_date      ON milk_sales(date)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_exp_date     ON expenses(date)`);
+
+    const ex = await pool.query(`SELECT id FROM users WHERE username=$1`, ['admin']);
+    if (!ex.rows.length) {
       await pool.query(
-        'INSERT INTO users (id, username, password, role, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
-        [adminId, 'admin', hashedPassword, 'admin', 'Admin']
+        `INSERT INTO users (id,username,password,role,name) VALUES ($1,$2,$3,$4,$5)`,
+        [uuid(), 'admin', hashPassword('admin123'), 'admin', 'Admin']
       );
     }
-    
-    console.log('Database initialized successfully');
-  } catch (error) {
-    console.error('Database initialization error:', error);
-  }
+    console.log('DB ready');
+  } catch(e) { console.error('DB init error:', e); }
 }
 
-// Helper functions
-function uuid() { return crypto.randomBytes(16).toString('hex'); }
-
-function hashPassword(p) {
-  return crypto.createHash('sha256').update(p + SALT).digest('hex');
-}
-
+function uuid()           { return crypto.randomBytes(16).toString('hex'); }
+function hashPassword(p)  { return crypto.createHash('sha256').update(p + SALT).digest('hex'); }
 function createSession(userId) {
   const token = crypto.randomBytes(32).toString('hex');
   sessions[token] = { userId, at: Date.now() };
   return token;
 }
-
 function getSession(token) {
   if (!token) return null;
   const s = sessions[token];
@@ -161,23 +86,16 @@ function getSession(token) {
   if (Date.now() - s.at > 86400000) { delete sessions[token]; return null; }
   return s;
 }
-
 function auth(req) {
-  // Check both header and cookie for token
   const token = req.headers['x-session-token'] || (req.cookies && req.cookies.token);
-  console.log('Auth token:', token, 'Cookies:', req.cookies);
-  if (!token) return null;
   const s = getSession(token);
-  if (!s) return null;
-  return pool.query('SELECT * FROM users WHERE id = $1', [s.userId])
-    .then(result => result.rows[0] || null)
-    .catch(() => null);
+  if (!s) return Promise.resolve(null);
+  return pool.query('SELECT * FROM users WHERE id=$1', [s.userId])
+    .then(r => r.rows[0] || null).catch(() => null);
 }
-
 function adminAuth(req) {
   return auth(req).then(u => (u && u.role === 'admin') ? u : null);
 }
-
 function parseBody(req) {
   return new Promise(res => {
     let b = '';
@@ -185,7 +103,6 @@ function parseBody(req) {
     req.on('end', () => { try { res(JSON.parse(b)); } catch { res({}); } });
   });
 }
-
 function json(res, data, status = 200) {
   res.writeHead(status, {
     'Content-Type': 'application/json',
@@ -195,666 +112,419 @@ function json(res, data, status = 200) {
   });
   res.end(JSON.stringify(data));
 }
-
 function serveStatic(res, filePath) {
   const ext = path.extname(filePath);
-  const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
+  const types = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css' };
   try {
     const content = fs.readFileSync(filePath);
     res.writeHead(200, { 'Content-Type': types[ext] || 'text/plain' });
     res.end(content);
   } catch { res.writeHead(404); res.end('Not found'); }
 }
-
-function todayStr() { return new Date().toISOString().split('T')[0]; }
-
-function dateStr(daysAgo = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split('T')[0];
+function pathId(url, pos) {
+  return new URL(url, 'http://localhost').pathname.split('/')[pos] || '';
 }
 
-// API Routes
 const routes = {
-  // Auth
-  'GET:/me': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    json(res, { id: user.id, username: user.username, role: user.role, name: user.name });
-  },
-
+  // AUTH
   'POST:/login': async (req, res) => {
     const { username, password } = await parseBody(req);
-    if (!username || !password) { return json(res, { error: 'Login va parol required' }, 400); }
-    
-    const hashedPassword = hashPassword(password);
-    const result = await pool.query(
-      'SELECT * FROM users WHERE username = $1 AND password = $2',
-      [username, hashedPassword]
-    );
-    
-    if (result.rows.length === 0) { return json(res, { error: 'Noto\'g\'ri login yoki parol' }, 401); }
-    
-    const user = result.rows[0];
+    if (!username || !password) return json(res, { error: 'Login va parol kerak' }, 400);
+    const r = await pool.query('SELECT * FROM users WHERE username=$1 AND password=$2', [username, hashPassword(password)]);
+    if (!r.rows[0]) return json(res, { error: "Noto'g'ri login yoki parol" }, 401);
+    const user = r.rows[0];
     const token = createSession(user.id);
-    
-    // Set cookie for session persistence
-    const isProduction = process.env.NODE_ENV === 'production';
-    const cookieOptions = [
-      `token=${token}`,
-      'Path=/',
-      'HttpOnly',
-      'SameSite=Lax'
-    ];
-    
-    if (isProduction) {
-      cookieOptions.push('Secure');
-    }
-    
-    res.setHeader('Set-Cookie', cookieOptions.join('; '));
-    
+    const isProd = process.env.NODE_ENV === 'production';
+    res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax${isProd?'; Secure':''}`);
     json(res, { token, user: { id: user.id, username: user.username, role: user.role, name: user.name } });
   },
-
-  // Animals
-  'GET:/animals': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const { search, status, page = 1, limit = 50 } = new URL(req.url, 'http://localhost').searchParams;
-    let query = 'SELECT * FROM animals';
-    const params = [];
-    const conditions = [];
-    
-    if (search) {
-      conditions.push('(tag_number ILIKE $1 OR name ILIKE $1)');
-      params.push(`%${search}%`);
-    }
-    if (status) {
-      conditions.push(`status = $${params.length + 1}`);
-      params.push(status);
-    }
-    
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-    
-    query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
-    params.push(limit, (page - 1) * limit);
-    
-    const result = await pool.query(query, params);
-    json(res, result.rows);
+  'GET:/me': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    json(res, { id: u.id, username: u.username, role: u.role, name: u.name });
   },
-
-  'POST:/animals': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const data = await parseBody(req);
-    
-    // Avval quloq raqami mavjudligini tekshiramiz
-    const existing = await pool.query('SELECT id, tag_number FROM animals WHERE tag_number = $1', [data.tag_number]);
-    if (existing.rows.length > 0) {
-      return json(res, { error: `"${data.tag_number}" quloq raqami allaqachon mavjud! Boshqa raqam kiriting.` }, 400);
-    }
-    
-    // Jins tekshiruvi - buqa va erkak hayvonlar qochish vaqtiga ega bo'lmasligi kerak
-    if (data.gender === 'buqa' || data.gender === 'erkak') {
-      if (data.heat_date) {
-        return json(res, { error: 'Buqa va erkak hayvonlar uchun qochish vaqtini kiritishingiz shart emas' }, 400);
-      }
-    }
-    
-    const id = uuid();
-    
-    try {
-      await pool.query(`
-        INSERT INTO animals (id, tag_number, name, type, gender, status, births, daily_milk, birth_date, heat_date, last_calving_date, notes, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `, [id, data.tag_number, data.name, data.type, data.gender, data.status, 
-          data.births || 0, data.daily_milk || 0, data.birth_date, data.heat_date || null, data.last_calving_date || null, data.notes]);
-      
-      const result = await pool.query('SELECT * FROM animals WHERE id = $1', [id]);
-      json(res, result.rows[0]);
-    } catch (error) {
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
-    }
-  },
-
-  'PUT:/animals/:id': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
-    const data = await parseBody(req);
-    
-    // Avval quloq raqami boshqa hayvonda mavjudligini tekshiramiz
-    const existing = await pool.query('SELECT id, tag_number FROM animals WHERE tag_number = $1 AND id != $2', [data.tag_number, id]);
-    if (existing.rows.length > 0) {
-      return json(res, { error: `"${data.tag_number}" quloq raqami allaqachon mavjud! Boshqa raqam kiriting.` }, 400);
-    }
-    
-    try {
-      await pool.query(`
-        UPDATE animals SET tag_number = $1, name = $2, type = $3, gender = $4, status = $5,
-        births = $6, daily_milk = $7, birth_date = $8, heat_date = $9, last_calving_date = $10, notes = $11, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $12
-      `, [data.tag_number, data.name, data.type, data.gender, data.status,
-          data.births || 0, data.daily_milk || 0, data.birth_date, data.heat_date || null, data.last_calving_date || null, data.notes, id]);
-      
-      const result = await pool.query('SELECT * FROM animals WHERE id = $1', [id]);
-      json(res, result.rows[0]);
-    } catch (error) {
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
-    }
-  },
-
-  'DELETE:/animals/:id': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
-    console.log('DELETE animal request:', { id, requestedBy: user.username });
-    
-    if (!id) {
-      return json(res, { error: 'Animal ID required' }, 400);
-    }
-    
-    try {
-      const result = await pool.query('DELETE FROM animals WHERE id = $1 RETURNING *', [id]);
-      
-      if (result.rows.length === 0) {
-        return json(res, { error: 'Animal not found' }, 404);
-      }
-      
-      console.log('Animal deleted successfully:', { id, tag_number: result.rows[0].tag_number });
-      json(res, { success: true, deletedAnimal: result.rows[0] });
-    } catch (error) {
-      console.error('Delete animal error:', error);
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
-    }
-  },
-
-  // Milk records
-  'GET:/milk': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const { date, limit = 50 } = new URL(req.url, 'http://localhost').searchParams;
-    let query = 'SELECT mr.*, a.tag_number, a.name FROM milk_records mr LEFT JOIN animals a ON mr.animal_id = a.id';
-    const params = [];
-    
-    if (date) {
-      query += ' WHERE mr.date = $1 ORDER BY mr.session';
-      params.push(date);
-    } else {
-      query += ' ORDER BY mr.date DESC, mr.session LIMIT $1';
-      params.push(limit);
-    }
-    
-    const result = await pool.query(query, params);
-    json(res, result.rows);
-  },
-
-  'POST:/milk': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const data = await parseBody(req);
-    const id = uuid();
-    
-    try {
-      await pool.query(`
-        INSERT INTO milk_records (id, animal_id, date, session, liters, price, total, notes, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `, [id, data.animal_id || null, data.date, data.session, data.liters, 0, 0, data.notes || null]);
-      
-      const result = await pool.query('SELECT * FROM milk_records WHERE id = $1', [id]);
-      json(res, result.rows[0]);
-    } catch (error) {
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
-    }
-  },
-
-  'DELETE:/milk/:id': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
-    console.log('DELETE milk record request:', { id, requestedBy: user.username });
-    
-    if (!id) {
-      return json(res, { error: 'Milk record ID required' }, 400);
-    }
-    
-    try {
-      const result = await pool.query('DELETE FROM milk_records WHERE id = $1 RETURNING *', [id]);
-      
-      if (result.rows.length === 0) {
-        return json(res, { error: 'Milk record not found' }, 404);
-      }
-      
-      console.log('Milk record deleted successfully:', { id, date: result.rows[0].date, liters: result.rows[0].liters });
-      json(res, { success: true, deletedMilkRecord: result.rows[0] });
-    } catch (error) {
-      console.error('Delete milk record error:', error);
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
-    }
-  },
-
-  // Milk Sales
-  'GET:/milk-sales': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const { date, limit = 50 } = new URL(req.url, 'http://localhost').searchParams;
-    let query = 'SELECT * FROM milk_sales';
-    const params = [];
-    
-    if (date) {
-      query += ' WHERE date = $1 ORDER BY created_at DESC';
-      params.push(date);
-    } else {
-      query += ' ORDER BY date DESC, created_at DESC LIMIT $1';
-      params.push(limit);
-    }
-    
-    const result = await pool.query(query, params);
-    json(res, result.rows);
-  },
-
-  'POST:/milk-sales': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const data = await parseBody(req);
-    const id = uuid();
-    const total = data.liters * data.price;
-    
-    await pool.query(`
-      INSERT INTO milk_sales (id, date, liters, price, total, buyer, phone, notes, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `, [id, data.date, data.liters, data.price, total, data.buyer, data.phone, data.notes]);
-    
-    const result = await pool.query('SELECT * FROM milk_sales WHERE id = $1', [id]);
-    json(res, result.rows[0]);
-  },
-
-  'DELETE:/milk-sales/:id': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
-    console.log('DELETE milk sale request:', { id, requestedBy: user.username });
-    
-    if (!id) {
-      return json(res, { error: 'Milk sale ID required' }, 400);
-    }
-    
-    try {
-      const result = await pool.query('DELETE FROM milk_sales WHERE id = $1 RETURNING *', [id]);
-      
-      if (result.rows.length === 0) {
-        return json(res, { error: 'Milk sale not found' }, 404);
-      }
-      
-      console.log('Milk sale deleted successfully:', { id, date: result.rows[0].date, liters: result.rows[0].liters });
-      json(res, { success: true, deletedMilkSale: result.rows[0] });
-    } catch (error) {
-      console.error('Delete milk sale error:', error);
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
-    }
-  },
-
-  // Expenses
-  'GET:/expenses': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const { limit = 50 } = new URL(req.url, 'http://localhost').searchParams;
-    const result = await pool.query('SELECT * FROM expenses ORDER BY date DESC LIMIT $1', [limit]);
-    json(res, result.rows);
-  },
-
-  'POST:/expenses': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const data = await parseBody(req);
-    const id = uuid();
-    
-    await pool.query(`
-      INSERT INTO expenses (id, category, amount, description, date, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `, [id, data.category, data.amount, data.description, data.date]);
-    
-    const result = await pool.query('SELECT * FROM expenses WHERE id = $1', [id]);
-    json(res, result.rows[0]);
-  },
-
-  'DELETE:/expenses/:id': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
-    console.log('DELETE expense request:', { id, requestedBy: user.username });
-    
-    if (!id) {
-      return json(res, { error: 'Expense ID required' }, 400);
-    }
-    
-    try {
-      const result = await pool.query('DELETE FROM expenses WHERE id = $1 RETURNING *', [id]);
-      
-      if (result.rows.length === 0) {
-        return json(res, { error: 'Expense not found' }, 404);
-      }
-      
-      console.log('Expense deleted successfully:', { id, category: result.rows[0].category, amount: result.rows[0].amount });
-      json(res, { success: true, deletedExpense: result.rows[0] });
-    } catch (error) {
-      console.error('Delete expense error:', error);
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
-    }
-  },
-
-  // Users (Admin)
-  'GET:/users': async (req, res) => {
-    const user = await adminAuth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const result = await pool.query('SELECT id, username, role, name, COALESCE(created_at, CURRENT_TIMESTAMP) as created_at FROM users ORDER BY COALESCE(created_at, CURRENT_TIMESTAMP) DESC');
-    json(res, result.rows);
-  },
-
-  'POST:/users': async (req, res) => {
-    const user = await adminAuth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const data = await parseBody(req);
-    
-    // Avval username mavjudligini tekshiramiz
-    const existing = await pool.query('SELECT id, username FROM users WHERE username = $1', [data.username]);
-    if (existing.rows.length > 0) {
-      return json(res, { error: `"${data.username}" username allaqachon mavjud! Boshqa username kiriting.` }, 400);
-    }
-    
-    const id = uuid();
-    
-    try {
-      // Try with created_at/updated_at first
-      await pool.query(`
-        INSERT INTO users (id, username, password, role, name, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `, [id, data.username, hashPassword(data.password), data.role, data.name]);
-      
-      const result = await pool.query('SELECT id, username, role, name, COALESCE(created_at, CURRENT_TIMESTAMP) as created_at FROM users WHERE id = $1', [id]);
-      json(res, result.rows[0]);
-    } catch (error) {
-      // Fallback to basic insert without timestamps
-      try {
-        await pool.query(`
-          INSERT INTO users (id, username, password, role, name)
-          VALUES ($1, $2, $3, $4, $5)
-        `, [id, data.username, hashPassword(data.password), data.role, data.name]);
-        
-        const result = await pool.query('SELECT id, username, role, name, CURRENT_TIMESTAMP as created_at FROM users WHERE id = $1', [id]);
-        json(res, result.rows[0]);
-      } catch (fallbackError) {
-        json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
-      }
-    }
-  },
-
-  'DELETE:/users/:id': async (req, res) => {
-    const user = await adminAuth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const id = new URL(req.url, 'http://localhost').pathname.split('/').pop();
-    console.log('DELETE user request:', { id, requestedBy: user.username });
-    
-    if (!id) {
-      return json(res, { error: 'User ID required' }, 400);
-    }
-    
-    // Prevent deleting current logged-in user
-    if (id === user.id) {
-      return json(res, { error: 'O\'z o\'zingizni o\'chira olmaysiz' }, 400);
-    }
-    
-    try {
-      const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
-      
-      if (result.rows.length === 0) {
-        return json(res, { error: 'User not found' }, 404);
-      }
-      
-      console.log('User deleted successfully:', { id, username: result.rows[0].username });
-      json(res, { success: true, deletedUser: result.rows[0] });
-    } catch (error) {
-      console.error('Delete user error:', error);
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
-    }
-  },
-
   'POST:/logout': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    // Clear session
     const token = req.headers['x-session-token'] || (req.cookies && req.cookies.token);
-    if (token) {
-      delete sessions[token];
-    }
-    
-    // Clear cookie
+    if (token) delete sessions[token];
     res.setHeader('Set-Cookie', 'token=; Path=/; Max-Age=0');
-    
     json(res, { success: true });
   },
 
-  // Finance stats
-  'GET:/finance': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const { period = 'day' } = new URL(req.url, 'http://localhost').searchParams;
-    let dateCondition = '';
-    
-    switch (period) {
-      case 'day': dateCondition = "AND date = CURRENT_DATE"; break;
-      case 'week': dateCondition = "AND date >= CURRENT_DATE - INTERVAL '7 days'"; break;
-      case 'month': dateCondition = "AND date >= CURRENT_DATE - INTERVAL '30 days'"; break;
-      case 'year': dateCondition = "AND date >= CURRENT_DATE - INTERVAL '365 days'"; break;
-    }
-    
-    const [milkSalesResult, expenseResult] = await Promise.all([
-      pool.query(`SELECT COALESCE(SUM(total), 0) as total FROM milk_sales WHERE 1=1 ${dateCondition}`),
-      pool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE 1=1 ${dateCondition}`)
+  // STATS
+  'GET:/stats/dashboard': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const [aStats, milkToday, milk7, revToday, recentSales] = await Promise.all([
+      pool.query(`SELECT COUNT(*) FILTER (WHERE status!='sotildi') AS total,
+        COUNT(*) FILTER (WHERE status='sut_beradi') AS sut,
+        COUNT(*) FILTER (WHERE status='kasal') AS kasal,
+        COUNT(*) FILTER (WHERE status='bogoz') AS bogoz,
+        COUNT(*) FILTER (WHERE status='bozak') AS bozak FROM animals`),
+      pool.query(`SELECT COALESCE(SUM(liters),0) AS liters FROM milk_records WHERE date=CURRENT_DATE`),
+      pool.query(`SELECT date::text, SUM(liters) AS liters FROM milk_records WHERE date>=CURRENT_DATE-INTERVAL '6 days' GROUP BY date ORDER BY date`),
+      pool.query(`SELECT COALESCE(SUM(total),0) AS total FROM milk_sales WHERE date=CURRENT_DATE`),
+      pool.query(`SELECT * FROM milk_sales ORDER BY date DESC, created_at DESC LIMIT 6`),
     ]);
-    
+    const last7 = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const ds = d.toISOString().split('T')[0];
+      const found = milk7.rows.find(r => r.date === ds);
+      last7.push({ date: ds, liters: found ? parseFloat(found.liters) : 0 });
+    }
+    const s = aStats.rows[0];
     json(res, {
-      income: parseFloat(milkSalesResult.rows[0].total),
-      expenses: parseFloat(expenseResult.rows[0].total),
-      profit: parseFloat(milkSalesResult.rows[0].total) - parseFloat(expenseResult.rows[0].total)
+      todayLiters: parseFloat(milkToday.rows[0].liters),
+      todayRevenue: parseFloat(revToday.rows[0].total),
+      last7,
+      animalStats: { total:parseInt(s.total), sut:parseInt(s.sut), kasal:parseInt(s.kasal), bogoz:parseInt(s.bogoz), bozak:parseInt(s.bozak) },
+      recentMilk: recentSales.rows.map(r => ({ ...r, liters:parseFloat(r.liters), price:parseFloat(r.price), total:parseFloat(r.total) })),
     });
   },
 
-  // Daily milk tracking
-  'GET:/milk/daily': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const { date = new Date().toISOString().split('T')[0] } = new URL(req.url, 'http://localhost').searchParams;
-    
+  'GET:/stats/finance': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const { period='month' } = new URL(req.url,'http://localhost').searchParams;
+    let cond, grp;
+    switch(period) {
+      case 'day':   cond="date=CURRENT_DATE";                         grp="date::text"; break;
+      case 'week':  cond="date>=CURRENT_DATE-INTERVAL '6 days'";      grp="date::text"; break;
+      case 'month': cond="date>=CURRENT_DATE-INTERVAL '29 days'";     grp="date::text"; break;
+      case 'year':  cond="date>=CURRENT_DATE-INTERVAL '364 days'";    grp="to_char(date,'YYYY-MM')"; break;
+      default:      cond="date>=CURRENT_DATE-INTERVAL '29 days'";     grp="date::text";
+    }
+    const [ms,ex,as2,byCatR,msC,exC] = await Promise.all([
+      pool.query(`SELECT COALESCE(SUM(total),0) AS rev, COALESCE(SUM(liters),0) AS liters FROM milk_sales WHERE ${cond}`),
+      pool.query(`SELECT COALESCE(SUM(amount),0) AS tot, COUNT(*) AS cnt FROM expenses WHERE ${cond}`),
+      pool.query(`SELECT COALESCE(SUM(price),0) AS rev, COUNT(*) AS cnt FROM animal_sales WHERE ${cond}`),
+      pool.query(`SELECT category, SUM(amount) AS tot FROM expenses WHERE ${cond} GROUP BY category ORDER BY tot DESC`),
+      pool.query(`SELECT ${grp} AS d, COALESCE(SUM(total),0) AS income FROM milk_sales WHERE ${cond} GROUP BY d ORDER BY d`),
+      pool.query(`SELECT ${grp} AS d, COALESCE(SUM(amount),0) AS expense FROM expenses WHERE ${cond} GROUP BY d ORDER BY d`),
+    ]);
+    const map = {};
+    msC.rows.forEach(r => { map[r.d]={date:r.d, income:parseFloat(r.income), expense:0}; });
+    exC.rows.forEach(r => { if(map[r.d]) map[r.d].expense=parseFloat(r.expense); else map[r.d]={date:r.d,income:0,expense:parseFloat(r.expense)}; });
+    const byCat = {}; byCatR.rows.forEach(r => { byCat[r.category]=parseFloat(r.tot); });
+    const milkRevenue=parseFloat(ms.rows[0].rev), salesRevenue=parseFloat(as2.rows[0].rev), totalExp=parseFloat(ex.rows[0].tot);
+    json(res, {
+      milkRevenue, milkLiters:parseFloat(ms.rows[0].liters),
+      salesRevenue, salesCount:parseInt(as2.rows[0].cnt),
+      totalExpenses:totalExp, expCount:parseInt(ex.rows[0].cnt),
+      netProfit:milkRevenue+salesRevenue-totalExp,
+      chart:Object.values(map).sort((a,b)=>a.date.localeCompare(b.date)),
+      byCat,
+    });
+  },
+
+  // ANIMALS
+  'GET:/animals': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const sp = new URL(req.url,'http://localhost').searchParams;
+    const search=sp.get('search'), status=sp.get('status');
+    const page=parseInt(sp.get('page')||'1'), limit=parseInt(sp.get('limit')||'200');
+    const conds=[], params=[];
+    if (search) { conds.push(`(tag_number ILIKE $${params.length+1} OR name ILIKE $${params.length+1})`); params.push(`%${search}%`); }
+    if (status) { conds.push(`status=$${params.length+1}`); params.push(status); }
+    const where = conds.length ? ' WHERE '+conds.join(' AND ') : '';
+    params.push(limit, (page-1)*limit);
+    const r = await pool.query(`SELECT * FROM animals${where} ORDER BY created_at DESC LIMIT $${params.length-1} OFFSET $${params.length}`, params);
+    json(res, r.rows);
+  },
+
+  'POST:/animals': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const d = await parseBody(req);
+    if (!d.tag_number) return json(res, { error: 'Quloq raqami kerak' }, 400);
+    const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1', [d.tag_number]);
+    if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
+    const id = uuid();
     try {
-      const result = await pool.query(`
-        SELECT 
-          a.id,
-          a.tag_number,
-          a.name,
-          a.daily_milk as expected_milk,
-          COALESCE(SUM(mr.liters), 0) as actual_milk,
-          COUNT(mr.id) as sessions
-        FROM animals a
-        LEFT JOIN milk_records mr ON a.id = mr.animal_id AND mr.date = $1
-        WHERE a.status != 'sotildi'
-        GROUP BY a.id, a.tag_number, a.name, a.daily_milk
-        ORDER BY a.tag_number
-      `, [date]);
-      
-      json(res, result.rows);
-    } catch (error) {
-      console.error('Daily milk tracking error:', error);
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
-    }
+      await pool.query(`INSERT INTO animals (id,tag_number,name,type,gender,status,births,daily_milk,birth_date,last_calving_date,insemination_date,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [id,d.tag_number,d.name||null,d.type||'sigir',d.gender||'female',d.status||'sut_beradi',d.births||0,d.daily_milk||0,d.birth_date||null,d.last_calving_date||null,d.insemination_date||null,d.notes||null]);
+      const r = await pool.query('SELECT * FROM animals WHERE id=$1', [id]);
+      json(res, r.rows[0]);
+    } catch(e) { json(res, { error: 'Xatolik: '+e.message }, 400); }
   },
 
-  // Dashboard stats
-  'GET:/dashboard': async (req, res) => {
-    const user = await auth(req);
-    if (!user) return json(res, { error: 'Unauthorized' }, 401);
-    
-    const [animalCount, milkToday, milk7Days, expenseToday, animalMilkChart] = await Promise.all([
-      pool.query('SELECT COUNT(*) as count FROM animals WHERE status != $1', ['sotildi']),
-      pool.query('SELECT COALESCE(SUM(liters), 0) as total FROM milk_records WHERE date = CURRENT_DATE'),
-      pool.query(`
-        SELECT date, SUM(liters) as liters 
-        FROM milk_records 
-        WHERE date >= CURRENT_DATE - INTERVAL '7 days' 
-        GROUP BY date 
-        ORDER BY date
-      `),
-      pool.query('SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE date = CURRENT_DATE'),
-      pool.query(`
-        SELECT 
-          a.tag_number,
-          a.name,
-          COALESCE(AVG(mr.liters), 0) as avg_milk_7days,
-          COUNT(DISTINCT mr.date) as milk_days
-        FROM animals a
-        LEFT JOIN milk_records mr ON a.id = mr.animal_id 
-          AND mr.date >= CURRENT_DATE - INTERVAL '7 days'
-        WHERE a.status != 'sotildi' AND a.gender IN ('sigir', 'cow')
-        GROUP BY a.id, a.tag_number, a.name
-        HAVING COALESCE(AVG(mr.liters), 0) > 0
-        ORDER BY avg_milk_7days DESC
-        LIMIT 10
-      `)
-    ]);
-    
-    json(res, {
-      animalCount: parseInt(animalCount.rows[0].count),
-      milkToday: parseFloat(milkToday.rows[0].total),
-      milk7Days: milk7Days.rows.map(r => ({ date: r.date, liters: parseFloat(r.liters) })),
-      expenseToday: parseFloat(expenseToday.rows[0].total),
-      animalMilkChart: animalMilkChart.rows.map(r => ({
-        tag_number: r.tag_number,
-        name: r.name,
-        avg_milk: parseFloat(r.avg_milk_7days),
-        milk_days: parseInt(r.milk_days)
-      }))
-    });
-  }
+  'PUT:/animals/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const id = pathId(req.url, 2);
+    const d = await parseBody(req);
+    const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
+    if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
+    try {
+      await pool.query(`UPDATE animals SET tag_number=$1,name=$2,type=$3,gender=$4,status=$5,births=$6,daily_milk=$7,birth_date=$8,last_calving_date=$9,insemination_date=$10,notes=$11,updated_at=CURRENT_TIMESTAMP WHERE id=$12`,
+        [d.tag_number,d.name||null,d.type,d.gender,d.status,d.births||0,d.daily_milk||0,d.birth_date||null,d.last_calving_date||null,d.insemination_date||null,d.notes||null,id]);
+      const r = await pool.query('SELECT * FROM animals WHERE id=$1', [id]);
+      json(res, r.rows[0]);
+    } catch(e) { json(res, { error: 'Xatolik: '+e.message }, 400); }
+  },
+
+  'DELETE:/animals/:id': async (req, res) => {
+    const u = await adminAuth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const id = pathId(req.url, 2);
+    try {
+      const r = await pool.query('DELETE FROM animals WHERE id=$1 RETURNING *', [id]);
+      if (!r.rows.length) return json(res, { error: 'Topilmadi' }, 404);
+      json(res, { success: true });
+    } catch(e) { json(res, { error: 'Xatolik' }, 500); }
+  },
+
+  'GET:/animals/:id/milk': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const parts = new URL(req.url,'http://localhost').pathname.split('/');
+    const id = parts[2];
+    const days = parseInt(new URL(req.url,'http://localhost').searchParams.get('days')||'30');
+    const r = await pool.query(`
+      SELECT date::text,
+        SUM(liters) AS total,
+        MAX(CASE WHEN session=1 THEN liters END) AS s1,
+        MAX(CASE WHEN session=2 THEN liters END) AS s2
+      FROM milk_records
+      WHERE animal_id=$1 AND date>=CURRENT_DATE-($2||' days')::interval
+      GROUP BY date ORDER BY date`,
+      [id, days]
+    );
+    json(res, r.rows.map(row => ({
+      date:row.date, total:parseFloat(row.total),
+      s1:row.s1?parseFloat(row.s1):null, s2:row.s2?parseFloat(row.s2):null
+    })));
+  },
+
+  // MILK
+  'GET:/milk': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const sp = new URL(req.url,'http://localhost').searchParams;
+    const date=sp.get('date'), limit=parseInt(sp.get('limit')||'60');
+    let q = `SELECT mr.*, a.tag_number, a.name AS animal_name FROM milk_records mr LEFT JOIN animals a ON mr.animal_id=a.id`;
+    const params=[];
+    if (date) { q+=' WHERE mr.date=$1 ORDER BY a.tag_number, mr.session'; params.push(date); }
+    else       { q+=' ORDER BY mr.date DESC, mr.created_at DESC LIMIT $1'; params.push(limit); }
+    const r = await pool.query(q, params);
+    json(res, r.rows);
+  },
+
+  'GET:/milk/daily': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const date = new URL(req.url,'http://localhost').searchParams.get('date') || new Date().toISOString().split('T')[0];
+    const r = await pool.query(`
+      SELECT a.id, a.tag_number, a.name, a.status, a.daily_milk AS expected,
+        MAX(CASE WHEN mr.session=1 THEN mr.liters END) AS s1,
+        MAX(CASE WHEN mr.session=2 THEN mr.liters END) AS s2,
+        MAX(CASE WHEN mr.session=1 THEN mr.id END) AS s1_id,
+        MAX(CASE WHEN mr.session=2 THEN mr.id END) AS s2_id,
+        COALESCE(SUM(mr.liters), 0) AS total
+      FROM animals a
+      LEFT JOIN milk_records mr ON a.id=mr.animal_id AND mr.date=$1
+      WHERE a.status != 'sotildi'
+      GROUP BY a.id, a.tag_number, a.name, a.status, a.daily_milk
+      ORDER BY (a.status='sut_beradi') DESC, a.tag_number`,
+      [date]
+    );
+    json(res, r.rows.map(row => ({
+      id:row.id, tag_number:row.tag_number, name:row.name, status:row.status,
+      expected:parseFloat(row.expected||0),
+      s1:row.s1?parseFloat(row.s1):null, s1_id:row.s1_id,
+      s2:row.s2?parseFloat(row.s2):null, s2_id:row.s2_id,
+      total:parseFloat(row.total),
+    })));
+  },
+
+  'POST:/milk': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const d = await parseBody(req);
+    if (!d.liters || !d.session) return json(res, { error: 'Litr va sessiya kerak' }, 400);
+    if (d.animal_id) {
+      const dup = await pool.query('SELECT id FROM milk_records WHERE animal_id=$1 AND date=$2 AND session=$3', [d.animal_id, d.date, d.session]);
+      if (dup.rows.length) return json(res, { error: `Bu mol uchun ${d.session}-soqim allaqachon qayd qilingan` }, 400);
+    }
+    const id = uuid();
+    await pool.query(`INSERT INTO milk_records (id,animal_id,date,session,liters,notes) VALUES ($1,$2,$3,$4,$5,$6)`,
+      [id,d.animal_id||null,d.date,d.session,d.liters,d.notes||null]);
+    const r = await pool.query(`SELECT mr.*, a.tag_number, a.name AS animal_name FROM milk_records mr LEFT JOIN animals a ON mr.animal_id=a.id WHERE mr.id=$1`, [id]);
+    json(res, r.rows[0]);
+  },
+
+  'DELETE:/milk/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const id = pathId(req.url, 2);
+    try {
+      const r = await pool.query('DELETE FROM milk_records WHERE id=$1 RETURNING *', [id]);
+      if (!r.rows.length) return json(res, { error: 'Topilmadi' }, 404);
+      json(res, { success: true });
+    } catch(e) { json(res, { error: 'Xatolik' }, 500); }
+  },
+
+  // MILK SALES
+  'GET:/milk-sales': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const sp=new URL(req.url,'http://localhost').searchParams;
+    const date=sp.get('date'), limit=parseInt(sp.get('limit')||'60');
+    let q='SELECT * FROM milk_sales';
+    const params=[];
+    if(date){q+=' WHERE date=$1 ORDER BY created_at DESC';params.push(date);}
+    else{q+=' ORDER BY date DESC, created_at DESC LIMIT $1';params.push(limit);}
+    json(res, (await pool.query(q, params)).rows);
+  },
+
+  'POST:/milk-sales': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const d = await parseBody(req);
+    if (!d.liters||!d.price||!d.buyer) return json(res, { error: 'Miqdor, narx va xaridor kerak' }, 400);
+    const id=uuid();
+    const total=parseFloat(d.liters)*parseFloat(d.price);
+    await pool.query(`INSERT INTO milk_sales (id,date,liters,price,total,buyer,phone,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [id,d.date,d.liters,d.price,total,d.buyer,d.phone||null,d.notes||null]);
+    json(res, (await pool.query('SELECT * FROM milk_sales WHERE id=$1',[id])).rows[0]);
+  },
+
+  'DELETE:/milk-sales/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const id = pathId(req.url, 2);
+    try {
+      const r = await pool.query('DELETE FROM milk_sales WHERE id=$1 RETURNING *',[id]);
+      if(!r.rows.length) return json(res,{error:'Topilmadi'},404);
+      json(res,{success:true});
+    } catch(e){json(res,{error:'Xatolik'},500);}
+  },
+
+  // EXPENSES
+  'GET:/expenses': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const limit=parseInt(new URL(req.url,'http://localhost').searchParams.get('limit')||'60');
+    json(res,(await pool.query('SELECT * FROM expenses ORDER BY date DESC, created_at DESC LIMIT $1',[limit])).rows);
+  },
+
+  'POST:/expenses': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const d = await parseBody(req);
+    if (!d.amount) return json(res, { error: 'Miqdor kerak' }, 400);
+    const id=uuid();
+    await pool.query(`INSERT INTO expenses (id,category,amount,description,date) VALUES ($1,$2,$3,$4,$5)`,
+      [id,d.category||'boshqa',d.amount,d.description||null,d.date]);
+    json(res,(await pool.query('SELECT * FROM expenses WHERE id=$1',[id])).rows[0]);
+  },
+
+  'DELETE:/expenses/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const id = pathId(req.url, 2);
+    try {
+      const r = await pool.query('DELETE FROM expenses WHERE id=$1 RETURNING *',[id]);
+      if(!r.rows.length) return json(res,{error:'Topilmadi'},404);
+      json(res,{success:true});
+    } catch(e){json(res,{error:'Xatolik'},500);}
+  },
+
+  // USERS
+  'GET:/users': async (req, res) => {
+    const u = await adminAuth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    json(res,(await pool.query('SELECT id,username,role,name,created_at FROM users ORDER BY created_at DESC')).rows);
+  },
+
+  'POST:/users': async (req, res) => {
+    const u = await adminAuth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const d = await parseBody(req);
+    if (!d.username||!d.password) return json(res,{error:'Username va parol kerak'},400);
+    const ex = await pool.query('SELECT id FROM users WHERE username=$1',[d.username]);
+    if(ex.rows.length) return json(res,{error:`"${d.username}" allaqachon mavjud`},400);
+    const id=uuid();
+    await pool.query(`INSERT INTO users (id,username,password,role,name) VALUES ($1,$2,$3,$4,$5)`,
+      [id,d.username,hashPassword(d.password),d.role||'worker',d.name||d.username]);
+    json(res,(await pool.query('SELECT id,username,role,name,created_at FROM users WHERE id=$1',[id])).rows[0]);
+  },
+
+  'DELETE:/users/:id': async (req, res) => {
+    const u = await adminAuth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const id = pathId(req.url, 2);
+    if(id===u.id) return json(res,{error:"O'z o'zingizni o'chira olmaysiz"},400);
+    try {
+      const r = await pool.query('DELETE FROM users WHERE id=$1 RETURNING *',[id]);
+      if(!r.rows.length) return json(res,{error:'Topilmadi'},404);
+      json(res,{success:true});
+    } catch(e){json(res,{error:'Xatolik'},500);}
+  },
+
+  // ANIMAL SALES
+  'POST:/sales': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    const d = await parseBody(req);
+    const id=uuid();
+    await pool.query(`INSERT INTO animal_sales (id,animal_id,price,buyer_name,reason,weight_kg,date,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [id,d.animal_id,d.price||0,d.buyer||null,d.reason||'sotish',d.weight_kg||null,d.date,d.notes||null]);
+    await pool.query(`UPDATE animals SET status='sotildi', updated_at=CURRENT_TIMESTAMP WHERE id=$1`,[d.animal_id]);
+    json(res,{success:true});
+  },
 };
 
-// Parse cookies from request
-function parseCookies(req) {
-  const cookie = req.headers.cookie || '';
-  return cookie.split(';').reduce((acc, c) => {
-    const [key, ...rest] = c.trim().split('=');
-    if (key) acc[key.trim()] = rest.join('=').trim();
-    return acc;
-  }, {});
+function matchPath(pattern, path) {
+  const pp=pattern.split('/'), rp=path.split('/');
+  if(pp.length!==rp.length) return false;
+  return pp.every((part,i)=>part.startsWith(':')||part===rp[i]);
 }
 
-// Server
+function parseCookies(req) {
+  return (req.headers.cookie||'').split(';').reduce((acc,c)=>{
+    const [k,...v]=c.trim().split('=');
+    if(k) acc[k.trim()]=v.join('=').trim();
+    return acc;
+  },{});
+}
+
 const server = http.createServer(async (req, res) => {
-  const method = req.method;
-  const url = req.url;
-  const pathname = new URL(url, 'http://localhost').pathname;
-  
-  // Parse cookies
-  req.cookies = parseCookies(req);
-  
-  // Handle CORS preflight
-  if (method === 'OPTIONS') {
-    res.writeHead(200, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, x-session-token',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-    });
+  const method=req.method, url=req.url;
+  const pathname=new URL(url,'http://localhost').pathname;
+  req.cookies=parseCookies(req);
+
+  if(method==='OPTIONS'){
+    res.writeHead(200,{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type, x-session-token','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS'});
     return res.end();
   }
-  
-  // API routes
-  if (pathname.startsWith('/api/')) {
-    const apiPath = pathname.replace('/api', '');
-    
-    // Try exact match first
-    let routeKey = `${method}:${apiPath}`;
-    let routeHandler = routes[routeKey];
-    
-    // If no exact match, try pattern matching
-    if (!routeHandler) {
-      for (const [pattern, handler] of Object.entries(routes)) {
-        if (pattern.startsWith(method + ':')) {
-          const patternPath = pattern.substring(method.length + 1);
-          if (matchPath(patternPath, apiPath)) {
-            routeHandler = handler;
-            routeKey = pattern;
-            break;
-          }
+
+  if(pathname.startsWith('/api/')){
+    const apiPath=pathname.replace('/api','');
+    let routeKey=`${method}:${apiPath}`;
+    let handler=routes[routeKey];
+    if(!handler){
+      for(const [pat,h] of Object.entries(routes)){
+        if(pat.startsWith(method+':')){
+          const patPath=pat.substring(method.length+1);
+          if(matchPath(patPath,apiPath)){handler=h;routeKey=pat;break;}
         }
       }
     }
-    
-    console.log('API Request:', { method, pathname, apiPath, routeKey, routeExists: !!routeHandler });
-    
-    if (routeHandler) {
-      try {
-        await routeHandler(req, res);
-      } catch (error) {
-        console.error('API Error:', error);
-        json(res, { error: 'Server error' }, 500);
-      }
+    if(handler){
+      try{await handler(req,res);}
+      catch(e){console.error('API Error:',e);json(res,{error:'Server xatosi'},500);}
     } else {
-      console.log('Route not found:', { method, pathname, apiPath, availableRoutes: Object.keys(routes).filter(k => k.startsWith(method)) });
-      json(res, { error: 'Route not found' }, 404);
+      json(res,{error:'Route topilmadi'},404);
     }
     return;
   }
 
-// Helper function for path pattern matching
-function matchPath(pattern, path) {
-  const patternParts = pattern.split('/');
-  const pathParts = path.split('/');
-  
-  if (patternParts.length !== pathParts.length) {
-    return false;
-  }
-  
-  return patternParts.every((part, index) => {
-    return part.startsWith(':') || part === pathParts[index];
-  });
-}
-  
-  // Static files
-  if (pathname === '/') {
-    serveStatic(res, path.join(PUBLIC_DIR, 'index.html'));
-  } else {
-    const filePath = path.join(PUBLIC_DIR, pathname);
-    serveStatic(res, filePath);
-  }
+  if(pathname==='/') serveStatic(res,path.join(PUBLIC_DIR,'index.html'));
+  else serveStatic(res,path.join(PUBLIC_DIR,pathname));
 });
 
-// Start server
-initDB().then(() => {
-  server.listen(PORT, () => {
-    console.log(`FermaApp server running on port ${PORT}`);
-    console.log(`Database: PostgreSQL`);
-  });
-}).catch(error => {
-  console.error('Failed to start server:', error);
-  process.exit(1);
-});
+initDB().then(()=>{
+  server.listen(PORT,'0.0.0.0',()=>console.log(`FermaApp running on port ${PORT}`));
+}).catch(e=>{console.error('Failed to start:',e);process.exit(1);});
