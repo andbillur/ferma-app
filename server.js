@@ -35,8 +35,12 @@ async function initDB() {
     await pool.query(`CREATE TABLE IF NOT EXISTS milk_records (
       id VARCHAR(32) PRIMARY KEY,
       animal_id VARCHAR(32) REFERENCES animals(id) ON DELETE SET NULL,
-      date DATE NOT NULL, session INTEGER NOT NULL, liters DECIMAL(6,2) NOT NULL,
-      notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+      date DATE NOT NULL, 
+      session INTEGER NOT NULL, 
+      liters DECIMAL(6,2),  -- Allow NULL values
+      notes TEXT, 
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
 
     // Add notes column if it doesn't exist
     await pool.query(`ALTER TABLE milk_records ADD COLUMN IF NOT EXISTS notes TEXT`).catch(()=>{});
