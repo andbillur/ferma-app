@@ -255,6 +255,7 @@ const routes = {
     const id = pathId(req.url, 2);
     if (!id) return json(res, { error: 'Animal ID kerak' }, 400);
     const d = await parseBody(req);
+    console.log('PUT /animals/:id data:', { id, data: d });
     if (!d.tag_number) return json(res, { error: 'Quloq raqami kerak' }, 400);
     const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
     if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
@@ -344,6 +345,8 @@ const routes = {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     const d = await parseBody(req);
+    console.log('POST /milk data:', d);
+    if (!d.animal_id) return json(res, { error: 'Molni tanlang' }, 400);
     if (!d.liters || !d.session) return json(res, { error: 'Litr va sessiya kerak' }, 400);
     if (d.animal_id) {
       const dup = await pool.query('SELECT id FROM milk_records WHERE animal_id=$1 AND date=$2 AND session=$3', [d.animal_id, d.date, d.session]);
