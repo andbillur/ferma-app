@@ -344,9 +344,26 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
-    await pool.query('DELETE FROM animals WHERE id = $1', [id]);
-    json(res, { success: true });
+    const id = pathname.split('/').pop();
+    console.log('DELETE animal request:', { id, requestedBy: user.username });
+    
+    if (!id) {
+      return json(res, { error: 'Animal ID required' }, 400);
+    }
+    
+    try {
+      const result = await pool.query('DELETE FROM animals WHERE id = $1 RETURNING *', [id]);
+      
+      if (result.rows.length === 0) {
+        return json(res, { error: 'Animal not found' }, 404);
+      }
+      
+      console.log('Animal deleted successfully:', { id, tag_number: result.rows[0].tag_number });
+      json(res, { success: true, deletedAnimal: result.rows[0] });
+    } catch (error) {
+      console.error('Delete animal error:', error);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
+    }
   },
 
   // Milk records
@@ -394,9 +411,26 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
-    await pool.query('DELETE FROM milk_records WHERE id = $1', [id]);
-    json(res, { success: true });
+    const id = pathname.split('/').pop();
+    console.log('DELETE milk record request:', { id, requestedBy: user.username });
+    
+    if (!id) {
+      return json(res, { error: 'Milk record ID required' }, 400);
+    }
+    
+    try {
+      const result = await pool.query('DELETE FROM milk_records WHERE id = $1 RETURNING *', [id]);
+      
+      if (result.rows.length === 0) {
+        return json(res, { error: 'Milk record not found' }, 404);
+      }
+      
+      console.log('Milk record deleted successfully:', { id, date: result.rows[0].date, liters: result.rows[0].liters });
+      json(res, { success: true, deletedMilkRecord: result.rows[0] });
+    } catch (error) {
+      console.error('Delete milk record error:', error);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
+    }
   },
 
   // Milk Sales
@@ -441,9 +475,26 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
-    await pool.query('DELETE FROM milk_sales WHERE id = $1', [id]);
-    json(res, { success: true });
+    const id = pathname.split('/').pop();
+    console.log('DELETE milk sale request:', { id, requestedBy: user.username });
+    
+    if (!id) {
+      return json(res, { error: 'Milk sale ID required' }, 400);
+    }
+    
+    try {
+      const result = await pool.query('DELETE FROM milk_sales WHERE id = $1 RETURNING *', [id]);
+      
+      if (result.rows.length === 0) {
+        return json(res, { error: 'Milk sale not found' }, 404);
+      }
+      
+      console.log('Milk sale deleted successfully:', { id, date: result.rows[0].date, liters: result.rows[0].liters });
+      json(res, { success: true, deletedMilkSale: result.rows[0] });
+    } catch (error) {
+      console.error('Delete milk sale error:', error);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
+    }
   },
 
   // Expenses
@@ -476,17 +527,25 @@ const routes = {
     const user = await auth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
-    if (!id) return json(res, { error: 'ID required' }, 400);
+    const id = pathname.split('/').pop();
+    console.log('DELETE expense request:', { id, requestedBy: user.username });
+    
+    if (!id) {
+      return json(res, { error: 'Expense ID required' }, 400);
+    }
     
     try {
       const result = await pool.query('DELETE FROM expenses WHERE id = $1 RETURNING *', [id]);
+      
       if (result.rows.length === 0) {
-        return json(res, { error: 'Harajat topilmadi' }, 404);
+        return json(res, { error: 'Expense not found' }, 404);
       }
-      json(res, { success: true });
+      
+      console.log('Expense deleted successfully:', { id, category: result.rows[0].category, amount: result.rows[0].amount });
+      json(res, { success: true, deletedExpense: result.rows[0] });
     } catch (error) {
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
+      console.error('Delete expense error:', error);
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 500);
     }
   },
 
@@ -542,7 +601,7 @@ const routes = {
     const user = await adminAuth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const { id } = new URL(req.url, 'http://localhost').pathname.split('/');
+    const id = pathname.split('/').pop();
     console.log('DELETE user request:', { id, requestedBy: user.username });
     
     if (!id) {
@@ -673,6 +732,8 @@ const server = http.createServer(async (req, res) => {
     const apiPath = pathname.replace('/api', '');
     const routeKey = `${method}:${apiPath}`;
     
+    console.log('API Request:', { method, pathname, apiPath, routeKey, routeExists: !!routes[routeKey] });
+    
     if (routes[routeKey]) {
       try {
         await routes[routeKey](req, res);
@@ -681,6 +742,7 @@ const server = http.createServer(async (req, res) => {
         json(res, { error: 'Server error' }, 500);
       }
     } else {
+      console.log('Route not found:', { method, pathname, apiPath, routeKey, availableRoutes: Object.keys(routes).filter(k => k.startsWith(method)) });
       json(res, { error: 'Route not found' }, 404);
     }
     return;
