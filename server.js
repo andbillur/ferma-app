@@ -495,7 +495,7 @@ const routes = {
     const user = await adminAuth(req);
     if (!user) return json(res, { error: 'Unauthorized' }, 401);
     
-    const result = await pool.query('SELECT id, username, role, name, created_at FROM users ORDER BY created_at DESC');
+    const result = await pool.query('SELECT id, username, role, name, COALESCE(created_at, CURRENT_TIMESTAMP) as created_at FROM users ORDER BY COALESCE(created_at, CURRENT_TIMESTAMP) DESC');
     json(res, result.rows);
   },
 
@@ -514,15 +514,27 @@ const routes = {
     const id = uuid();
     
     try {
+      // Try with created_at/updated_at first
       await pool.query(`
         INSERT INTO users (id, username, password, role, name, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `, [id, data.username, hashPassword(data.password), data.role, data.name]);
       
-      const result = await pool.query('SELECT id, username, role, name, created_at FROM users WHERE id = $1', [id]);
+      const result = await pool.query('SELECT id, username, role, name, COALESCE(created_at, CURRENT_TIMESTAMP) as created_at FROM users WHERE id = $1', [id]);
       json(res, result.rows[0]);
     } catch (error) {
-      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
+      // Fallback to basic insert without timestamps
+      try {
+        await pool.query(`
+          INSERT INTO users (id, username, password, role, name)
+          VALUES ($1, $2, $3, $4, $5)
+        `, [id, data.username, hashPassword(data.password), data.role, data.name]);
+        
+        const result = await pool.query('SELECT id, username, role, name, CURRENT_TIMESTAMP as created_at FROM users WHERE id = $1', [id]);
+        json(res, result.rows[0]);
+      } catch (fallbackError) {
+        json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
+      }
     }
   },
 
