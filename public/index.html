@@ -214,7 +214,7 @@ a{color:inherit;text-decoration:none;}
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo"><h1>🐄 FermaApp</h1><p>Ferma boshqaruv tizimi</p></div>
-    <div class="form-group"><label>Login</label><input type="text" id="l-username" placeholder="admin" autocomplete="username"></div>
+    <div class="form-group"><label>Login</label><input type="text" id="l-username" placeholder="Login" autocomplete="username"></div>
     <div class="form-group"><label>Parol</label><input type="password" id="l-password" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn btn-primary btn-block" onclick="login()">Kirish</button>
     <div id="login-err" class="login-err"></div>
@@ -494,18 +494,18 @@ a{color:inherit;text-decoration:none;}
     <div class="form-row">
       <div class="form-group"><label>Sana</label><input type="date" id="s-date"></div>
       <div class="form-group"><label>Sabab</label>
-        <select id="s-reason">
+        <select id="s-reason" onchange="toggleSellFields()">
           <option value="sotish">Sotish</option>
           <option value="soyish">So'yish</option>
           <option value="nobud">Nobud bo'ldi</option>
         </select>
       </div>
     </div>
-    <div class="form-row">
+    <div class="form-row" id="sell-price-row">
       <div class="form-group"><label>Narxi (so'm)</label><input type="number" id="s-price" placeholder="0" min="0"></div>
       <div class="form-group"><label>Og'irligi (kg)</label><input type="number" id="s-weight" placeholder="0" min="0"></div>
     </div>
-    <div class="form-group"><label>Xaridor</label><input type="text" id="s-buyer" placeholder="Xaridor yoki kompaniya"></div>
+    <div class="form-group" id="sell-buyer-row"><label>Xaridor</label><input type="text" id="s-buyer" placeholder="Xaridor yoki kompaniya"></div>
     <div class="form-group"><label>Izoh</label><input type="text" id="s-notes" placeholder="Ixtiyoriy"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-sell')">Bekor</button>
@@ -617,6 +617,7 @@ function shortDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); retur
 function statusBadge(s){
   const map={
     sut_beradi:['badge-green','Sut beradi'],
+      nobud:     ['badge-gray','Nobud bo'ldi'],
     bogoz:     ['badge-purple','Bog\'oz'],
     vaqtincha: ['badge-amber',"Vaqtincha yo'q"],
     kasal:     ['badge-red','Kasal'],
@@ -688,6 +689,7 @@ function renderAnimals(){
     ['bogoz',"Bog'oz",'badge-purple'],
     ['vaqtincha',"Vaqtincha yo'q",'badge-amber'],
     ['kasal','Kasal','badge-red'],
+    ['nobud',"Nobud bo'ldi",'badge-gray'],
     ['bozak','Bozak','badge-blue'],
     ['sotildi','Sotildi','badge-gray'],
   ];
@@ -742,7 +744,7 @@ async function showAnimalDetail(id){
   footer.innerHTML=`
     <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-animal-detail')">Yopish</button>
     <button class="btn btn-primary" style="flex:1" onclick="closeModal('modal-animal-detail');openEditAnimal('${a.id}')">Tahrirlash</button>
-    ${a.status!=='sotildi'?`<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>`:''}
+    ${(a.status!=='sotildi'&&a.status!=='nobud')?`<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>`:''}
     ${isAdmin?`<button class="btn btn-danger" style="flex:0 0 auto" onclick="deleteAnimal('${a.id}')">🗑</button>`:''}`;
   openModal('modal-animal-detail');
 }
@@ -918,8 +920,17 @@ async function openMilkModal(animalId='', animalTag='', session=1, date=''){
   if(!S.animals.length) await loadAnimals();
   const select=document.getElementById('m-animal');
   select.innerHTML='<option value="">Molni tanlang...</option>'+
-    S.animals.filter(a=>a.status!=='sotildi').map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
-  if(animalId) select.value=animalId;
+    S.animals.filter(a=>a.status!=='sotildi'&&a.status!=='nobud').map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
+  if(animalId){
+    select.value=animalId;
+    // If value not set (option not found), try again - animals may not include this animal
+    if(select.value!==animalId){
+      await loadAnimals();
+      select.innerHTML='<option value="">Molni tanlang...</option>'+
+        S.animals.filter(a=>a.status!=='sotildi'&&a.status!=='nobud').map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
+      select.value=animalId;
+    }
+  }
   document.getElementById('m-date').value=date||today();
   document.getElementById('m-session').value=session;
   document.getElementById('m-liters').value='';
@@ -1103,28 +1114,42 @@ async function deleteExpense(id){
 }
 
 // ── Sell Animal ───────────────────────────────────────────────────────────────
+function toggleSellFields(){
+  const reason=document.getElementById('s-reason').value;
+  const isNobud=(reason==='nobud');
+  document.getElementById('sell-price-row').style.display=isNobud?'none':'';
+  document.getElementById('sell-buyer-row').style.display=isNobud?'none':'';
+}
 function openSellModal(animalId){
   const a=S.animals.find(x=>x.id===animalId);
   if(!a) return;
   document.getElementById('sell-title').textContent=`Mol sotish — #${a.tag_number}`;
   document.getElementById('sell-animal-id').value=animalId;
   document.getElementById('s-date').value=today();
+  document.getElementById('s-reason').value='sotish';
   ['s-price','s-weight','s-buyer','s-notes'].forEach(id=>document.getElementById(id).value='');
+  toggleSellFields();
   openModal('modal-sell');
 }
 async function submitSale(){
   const id=document.getElementById('sell-animal-id').value;
-  const res=await POST('/sales',{
+  const reason=document.getElementById('s-reason').value;
+  const isNobud=(reason==='nobud');
+  const body={
     animal_id:id,
     date:document.getElementById('s-date').value,
-    reason:document.getElementById('s-reason').value,
-    price:document.getElementById('s-price').value||0,
-    weight_kg:document.getElementById('s-weight').value||0,
-    buyer:document.getElementById('s-buyer').value,
+    reason,
     notes:document.getElementById('s-notes').value,
-  });
+  };
+  if(!isNobud){
+    body.price=document.getElementById('s-price').value||0;
+    body.weight_kg=document.getElementById('s-weight').value||0;
+    body.buyer=document.getElementById('s-buyer').value;
+  }
+  const res=await POST('/sales',body);
   if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
-  showToast("Mol 'sotildi' holatiga o'tdi",'success');
+  const soldReason=document.getElementById('s-reason').value;
+  showToast(soldReason==='nobud'?"Mol 'nobud' holatiga o'tdi":"Mol 'sotildi' holatiga o'tdi",'success');
   closeModal('modal-sell'); loadAnimals();
 }
 
