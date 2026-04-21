@@ -393,7 +393,7 @@ a{color:inherit;text-decoration:none;}
       <button class="modal-close" onclick="closeModal('modal-password-reset')">✕</button>
     </div>
     
-    <!-- Email maydoni -->
+    <!-- Email maydoni - avvaldan ko'rsatiladi -->
     <div id="reset-step-1">
       <div class="form-group"><label>Email</label><input type="email" id="reset-email" placeholder="info@andbillur.com"></div>
       <div class="modal-footer">
@@ -1266,20 +1266,9 @@ initAuth();
 
 // Password reset functions
 function showPasswordReset() {
-  const email = document.getElementById('reset-email').value.trim();
-  
-  if (!email) {
-    showToast('Email manzilini kiriting', 'error');
-    return;
-  }
-  
-  if (!email.includes('@')) {
-    showToast('Noto\'g\'ri email formati', 'error');
-    return;
-  }
-  
-  // Emailga kod yuborish
-  requestPasswordReset();
+  // Login ekranini yopish va parol reset modalini ochish
+  document.getElementById('login-screen').style.display = 'none';
+  openModal('modal-password-reset');
 }
 
 async function submitPasswordReset() {
@@ -1336,9 +1325,11 @@ async function requestPasswordReset() {
   showToast(res.message || 'Tasdiqlash kodi emailingizga yuborildi', 'success');
   
   // Kod yuborilgandan keyin 2-qadamni ko'rsatish
-  document.getElementById('reset-step-1').style.display = 'none';
-  document.getElementById('reset-step-2').style.display = 'block';
-  document.getElementById('reset-code').focus();
+  setTimeout(() => {
+    document.getElementById('reset-step-1').style.display = 'none';
+    document.getElementById('reset-step-2').style.display = 'block';
+    document.getElementById('reset-code').focus();
+  }, 1000);
 }
 
 // Global login function for onclick
