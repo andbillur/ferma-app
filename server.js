@@ -38,6 +38,9 @@ async function initDB() {
       date DATE NOT NULL, session INTEGER NOT NULL, liters DECIMAL(6,2) NOT NULL,
       notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
 
+    // Add notes column if it doesn't exist
+    await pool.query(`ALTER TABLE milk_records ADD COLUMN IF NOT EXISTS notes TEXT`).catch(()=>{});
+
     await pool.query(`CREATE TABLE IF NOT EXISTS milk_sales (
       id VARCHAR(32) PRIMARY KEY, date DATE NOT NULL,
       liters DECIMAL(6,2) NOT NULL, price DECIMAL(8,2) NOT NULL,
