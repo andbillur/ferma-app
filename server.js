@@ -324,13 +324,17 @@ const routes = {
     const data = await parseBody(req);
     const id = uuid();
     
-    await pool.query(`
-      INSERT INTO milk_records (id, date, session, liters)
-      VALUES ($1, $2, $3, $4)
-    `, [id, data.date, data.session, data.liters]);
-    
-    const result = await pool.query('SELECT * FROM milk_records WHERE id = $1', [id]);
-    json(res, result.rows[0]);
+    try {
+      await pool.query(`
+        INSERT INTO milk_records (id, animal_id, date, session, liters, notes)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `, [id, data.animal_id || null, data.date, data.session, data.liters, data.notes || null]);
+      
+      const result = await pool.query('SELECT * FROM milk_records WHERE id = $1', [id]);
+      json(res, result.rows[0]);
+    } catch (error) {
+      json(res, { error: 'Xatolik yuz berdi. Qayta urinib ko\'ring.' }, 400);
+    }
   },
 
   'DELETE:/milk/:id': async (req, res) => {
