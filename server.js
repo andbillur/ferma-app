@@ -11,12 +11,20 @@ const sessions = {};
 
 // PostgreSQL connection
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://username:password@localhost:5432/ferma_app',
+  connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
+// Fallback to file-based database if PostgreSQL not available
+let USE_POSTGRES = !!process.env.DATABASE_URL;
+
 // Database initialization
 async function initDB() {
+  if (!USE_POSTGRES) {
+    console.log('PostgreSQL not configured. Please set DATABASE_URL environment variable.');
+    return;
+  }
+  
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
