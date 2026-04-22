@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FermaApp 🐄</title>
   <link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --p:#2a7d1f;--pd:#1a5c12;--pl:#e8f5e3;--ps:#c6ebbf;
@@ -315,6 +316,67 @@ a{color:inherit;text-decoration:none;}
 .multi-check-item:hover{border-color:var(--p);background:var(--pl);}
 .multi-check-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--p);cursor:pointer;}
 .multi-check-item.checked{border-color:var(--p);background:var(--pl);}
+
+/* ── Premium Design Tokens ── */
+:root {
+  --p:#0f7a2a;--pd:#0a5c1f;--p2:#139231;--pl:#e6f5eb;--ps:#bde8ca;
+  --orange:#ea580c;
+  --r:14px;--r-sm:8px;--r-lg:20px;
+  --font:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
+}
+html,body{font-family:var(--font) !important;}
+.btn{font-family:var(--font);font-weight:600;}
+input,select,textarea{font-family:var(--font);}
+.topbar{background:linear-gradient(135deg,#0a4a18 0%,#0f7a2a 60%,#139231 100%) !important;}
+.stat-card{position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.stat-card.orange{border-left:4px solid #ea580c;}
+.page-header-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.insem-filter-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.insem-tab{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;background:var(--card);border:1.5px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;}
+.insem-tab.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+.insem-tab:hover:not(.active){border-color:var(--purple);color:var(--purple);}
+.insem-card{background:var(--card);border-radius:var(--r);border:1.5px solid var(--border);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);transition:box-shadow .15s;}
+.insem-card:hover{box-shadow:var(--shadow-md);}
+.insem-card-left{display:flex;align-items:center;gap:12px;flex:1;}
+.insem-avatar{width:40px;height:40px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;}
+.insem-days{font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;}
+.insem-days.fresh{background:#dcfce7;color:#15803d;}
+.insem-days.mid{background:#fef3c7;color:#92400e;}
+.insem-days.late{background:#fee2e2;color:#991b1b;}
+.warehouse-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:16px;}
+.stock-card{background:var(--card);border-radius:var(--r);border:1.5px solid var(--border);padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:all .18s;cursor:pointer;}
+.stock-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.stock-card.low-stock{border-color:var(--amber);}
+.stock-card.out-of-stock{border-color:var(--red);}
+.stock-card-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:20px;}
+.stock-name{font-size:14px;font-weight:700;margin-bottom:4px;}
+.stock-amount{font-size:22px;font-weight:800;letter-spacing:-.5px;}
+.stock-unit{font-size:12px;color:var(--muted);font-weight:500;}
+.stock-alert{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:6px;padding:3px 8px;border-radius:8px;}
+.stock-alert.low{background:#fef3c7;color:#92400e;}
+.stock-alert.out{background:#fee2e2;color:#991b1b;}
+.warehouse-tx-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:7px;box-shadow:var(--shadow);}
+.tx-type-badge{padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;}
+.tx-in{background:#dcfce7;color:#15803d;}
+.tx-out{background:#fee2e2;color:#991b1b;}
+.equipment-list{display:flex;flex-direction:column;gap:10px;}
+.equipment-card{background:var(--card);border-radius:var(--r);border:1.5px solid var(--border);padding:16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);transition:all .18s;}
+.equipment-card:hover{box-shadow:var(--shadow-md);}
+.equip-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:24px;}
+.equip-icon.working{background:#dcfce7;}
+.equip-icon.repair{background:#fef3c7;}
+.equip-icon.inactive{background:#f3f4f6;}
+.equip-info{flex:1;}
+.equip-name{font-size:15px;font-weight:700;margin-bottom:3px;}
+.equip-meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;}
+.equip-status-badge{padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;flex-shrink:0;}
+.equip-status-badge.working{background:#dcfce7;color:#15803d;}
+.equip-status-badge.repair{background:#fef3c7;color:#92400e;}
+.equip-status-badge.inactive{background:#f3f4f6;color:#6b7280;}
+
 </style>
 </head>
 <body>
@@ -365,6 +427,9 @@ a{color:inherit;text-decoration:none;}
     <button class="nav-tab" data-page="animals">🐄 Mollar</button>
     <button class="nav-tab" data-page="milk">🥛 Sut</button>
     <button class="nav-tab" data-page="milk-sales">🛒 Sotuv</button>
+        <button class="nav-tab" data-page="insemination">🧬 Inseminatsiya</button>
+    <button class="nav-tab" data-page="warehouse">🏪 Ombor</button>
+    <button class="nav-tab" data-page="equipment">🚜 Texnika</button>
     <button class="nav-tab admin-only" data-page="finance">💰 Moliya</button>
     <button class="nav-tab" data-page="expenses">📋 Harajat</button>
     <button class="nav-tab admin-only" data-page="admin">⚙️ Admin</button>
@@ -430,6 +495,47 @@ a{color:inherit;text-decoration:none;}
       </div>
       <div id="milk-sales-stats" class="stat-grid" style="margin-bottom:16px"></div>
       <div class="card"><div class="card-title">So'nggi sotuvlar</div><div id="milk-sales-list"></div></div>
+    </section>
+
+    <!-- Inseminatsiya -->
+    <section class="page" id="page-insemination">
+      <div class="page-header">
+        <div class="page-title">🧬 Inseminatsiya</div>
+      </div>
+      <div id="insem-stats" class="stat-grid" style="margin-bottom:16px"></div>
+      <div class="insem-filter-tabs">
+        <div class="insem-tab active" onclick="setInsemTab('inseminated',this)">Urug'lantirilgan</div>
+        <div class="insem-tab" onclick="setInsemTab('not_inseminated',this)">Urug'lantirilmagan</div>
+        <div class="insem-tab" onclick="setInsemTab('pregnant',this)">Bog'oz</div>
+      </div>
+      <div id="insem-list"></div>
+    </section>
+
+    <!-- Ombor -->
+    <section class="page" id="page-warehouse">
+      <div class="page-header">
+        <div class="page-title">🏪 Ombor</div>
+        <div class="page-header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openWarehouseItemModal()">+ Mahsulot</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-warehouse-tx')">+ Kirim/Chiqim</button>
+        </div>
+      </div>
+      <div id="warehouse-alerts"></div>
+      <div id="warehouse-stock" class="warehouse-grid"></div>
+      <div class="card">
+        <div class="card-title">Oxirgi harakatlar</div>
+        <div id="warehouse-tx-list"></div>
+      </div>
+    </section>
+
+    <!-- Texnika -->
+    <section class="page" id="page-equipment">
+      <div class="page-header">
+        <div class="page-title">🚜 Texnika</div>
+        <button class="btn btn-primary btn-sm" onclick="openEquipmentModal()">+ Texnika qo'shish</button>
+      </div>
+      <div id="equipment-stats" class="stat-grid" style="margin-bottom:16px"></div>
+      <div id="equipment-list" class="equipment-list"></div>
     </section>
 
     <!-- Moliya -->
@@ -772,6 +878,72 @@ a{color:inherit;text-decoration:none;}
   </div>
 </div>
 
+
+<!-- Warehouse Item Modal -->
+<div class="modal-overlay" id="modal-warehouse-item" style="display:none" onclick="bgClose(event,'modal-warehouse-item')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="wh-item-title">Mahsulot qo'shish</div><button class="modal-close" onclick="closeModal('modal-warehouse-item')">&#x2715;</button></div>
+    <input type="hidden" id="wh-item-edit-id">
+    <div class="form-group"><label>Mahsulot nomi *</label><input type="text" id="wh-item-name" placeholder="Bedapoya, Kepak..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Kategoriya</label><select id="wh-item-cat"><option value="em_xashak">Em-xashak</option><option value="dori">Dori-darmon</option><option value="uskunalar">Uskunalar</option><option value="boshqa">Boshqa</option></select></div>
+      <div class="form-group"><label>O'lchov birligi</label><select id="wh-item-unit"><option value="kg">kg</option><option value="litr">litr</option><option value="dona">dona</option><option value="sumka">sumka</option><option value="tonna">tonna</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Joriy qoldiq</label><input type="number" id="wh-item-qty" placeholder="0" min="0" step="0.01"></div>
+      <div class="form-group"><label>Minimum zaxira</label><input type="number" id="wh-item-min" placeholder="100" min="0" step="0.01"><div class="form-hint">Kam bo'lsa ogohlantiradi</div></div>
+    </div>
+    <div class="form-group"><label>Izoh</label><input type="text" id="wh-item-notes" placeholder="Ixtiyoriy"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-warehouse-item')">Bekor</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitWarehouseItem()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Warehouse Transaction Modal -->
+<div class="modal-overlay" id="modal-warehouse-tx" style="display:none" onclick="bgClose(event,'modal-warehouse-tx')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Kirim / Chiqim</div><button class="modal-close" onclick="closeModal('modal-warehouse-tx')">&#x2715;</button></div>
+    <div class="form-group"><label>Mahsulot *</label><select id="wh-tx-item"><option value="">Mahsulotni tanlang...</option></select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Tur</label><select id="wh-tx-type"><option value="in">Kirim</option><option value="out">Chiqim</option></select></div>
+      <div class="form-group"><label>Miqdor *</label><input type="number" id="wh-tx-qty" placeholder="0" min="0.01" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Sana</label><input type="date" id="wh-tx-date"></div>
+      <div class="form-group"><label>Narx (ixtiyoriy)</label><input type="number" id="wh-tx-price" placeholder="0" min="0"></div>
+    </div>
+    <div class="form-group"><label>Izoh</label><input type="text" id="wh-tx-notes" placeholder="Sarflanish sababi..."></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-warehouse-tx')">Bekor</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitWarehouseTx()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Equipment Modal -->
+<div class="modal-overlay" id="modal-equipment" style="display:none" onclick="bgClose(event,'modal-equipment')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="equip-modal-title">Texnika qo'shish</div><button class="modal-close" onclick="closeModal('modal-equipment')">&#x2715;</button></div>
+    <input type="hidden" id="equip-edit-id">
+    <div class="form-group"><label>Nomi *</label><input type="text" id="equip-name" placeholder="Traktor, Sog'im mashinasi..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Turi</label><select id="equip-type"><option value="traktor">Traktor</option><option value="sogim">Sog'im mashinasi</option><option value="transport">Transport</option><option value="generator">Generator</option><option value="boshqa">Boshqa</option></select></div>
+      <div class="form-group"><label>Holati</label><select id="equip-status"><option value="working">Ishlamoqda</option><option value="repair">Ta'mirlashda</option><option value="inactive">Ishlamayapti</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Oxirgi texnik ko'rik</label><input type="date" id="equip-last-service"></div>
+      <div class="form-group"><label>Keyingi texnik ko'rik</label><input type="date" id="equip-next-service"></div>
+    </div>
+    <div class="form-group"><label>Izoh / Model</label><input type="text" id="equip-notes" placeholder="Model, seria raqam..."></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-equipment')">Bekor</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitEquipment()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -838,7 +1010,7 @@ function showPage(page){
   S.page=page;
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.page===page));
   document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
-  const loaders={dashboard:loadDashboard,animals:loadAnimals,milk:loadMilk,'milk-sales':loadMilkSales,finance:loadFinance,expenses:loadExpenses,admin:loadAdmin};
+  const loaders={dashboard:loadDashboard,animals:loadAnimals,milk:loadMilk,'milk-sales':loadMilkSales,finance:loadFinance,expenses:loadExpenses,admin:loadAdmin,insemination:loadInsemination,warehouse:loadWarehouse,equipment:loadEquipment};
   if(loaders[page]) loaders[page]();
 }
 
@@ -896,6 +1068,8 @@ async function loadDashboard(){
       <div class="stat-card blue"><div class="stat-label">Jami mol</div><div class="stat-val">${d.animalStats.total}</div><div class="stat-sub">Faol</div></div>
       <div class="stat-card teal"><div class="stat-label">Sut beradi</div><div class="stat-val">${d.animalStats.sut}</div><div class="stat-sub">ta mol</div></div>
       <div class="stat-card purple"><div class="stat-label">Bog'oz</div><div class="stat-val">${d.animalStats.bogoz}</div><div class="stat-sub">ta mol</div></div>
+      <div class="stat-card orange"><div class="stat-label">Inseminatsiya %</div><div class="stat-val">${(()=>{const f=S.animals.filter(a=>a.gender==="female"&&!["sotildi","nobud","soyildi"].includes(a.status));return f.length?Math.round(f.filter(a=>a.insemination_date).length/f.length*100):0;})()}%</div><div class="stat-sub">urg'ochi mollar</div></div>
+      <div class="stat-card amber"><div class="stat-label">Urug'lantirilmagan</div><div class="stat-val">${(()=>{const f=S.animals.filter(a=>a.gender==="female"&&!["sotildi","nobud","soyildi"].includes(a.status));return f.filter(a=>!a.insemination_date).length;})()}</div><div class="stat-sub">ta mol</div></div>
     </div>
     <div class="chart-wrap"><div class="chart-title">Oxirgi 7 kun — sut (litr)</div><div class="bar-chart">${barsHtml}</div></div>
     <div class="card"><div class="card-title">So'nggi sut sotuvlar</div>${recentHtml}</div>`;
@@ -1673,6 +1847,188 @@ function showToast(msg,type=''){
   toastTimer=setTimeout(()=>el.className='',2800);
 }
 
+
+// ── Insemination ──────────────────────────────────────────────────────────────
+const S_insemTab={tab:'inseminated'};
+function setInsemTab(tab,el){S_insemTab.tab=tab;document.querySelectorAll('.insem-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderInsemList();}
+async function loadInsemination(){
+  if(!S.animals.length) await loadAnimals();
+  const females=S.animals.filter(a=>a.gender==='female'&&!['sotildi','nobud','soyildi'].includes(a.status));
+  const inseminated=females.filter(a=>a.insemination_date);
+  const notInsem=females.filter(a=>!a.insemination_date);
+  const pregnant=females.filter(a=>a.status==='bogoz');
+  const pct=females.length?Math.round(inseminated.length/females.length*100):0;
+  document.getElementById('insem-stats').innerHTML=`
+    <div class="stat-card purple"><div class="stat-label">Urug'lantirilgan</div><div class="stat-val">${inseminated.length}</div><div class="stat-sub">${pct}% urg'ochi mollar</div></div>
+    <div class="stat-card amber"><div class="stat-label">Urug'lantirilmagan</div><div class="stat-val">${notInsem.length}</div><div class="stat-sub">diqqat kerak</div></div>
+    <div class="stat-card green"><div class="stat-label">Bog'oz</div><div class="stat-val">${pregnant.length}</div><div class="stat-sub">ta mol</div></div>
+    <div class="stat-card blue"><div class="stat-label">Jami urg'ochi</div><div class="stat-val">${females.length}</div><div class="stat-sub">ta mol</div></div>`;
+  renderInsemList();
+}
+function renderInsemList(){
+  const females=S.animals.filter(a=>a.gender==='female'&&!['sotildi','nobud','soyildi'].includes(a.status));
+  let list=[];
+  if(S_insemTab.tab==='inseminated') list=females.filter(a=>a.insemination_date);
+  else if(S_insemTab.tab==='not_inseminated') list=females.filter(a=>!a.insemination_date);
+  else list=females.filter(a=>a.status==='bogoz');
+  const el=document.getElementById('insem-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🧬</div><div>Ma\'lumot topilmadi</div></div>';return;}
+  function daysDiff(d){if(!d)return null;return Math.floor((new Date()-new Date(d))/86400000);}
+  el.innerHTML=list.map(a=>{
+    const days=a.insemination_date?daysDiff(a.insemination_date.split('T')[0]):null;
+    let daysBadge='';
+    if(days!==null){const cls=days<90?'fresh':days<180?'mid':'late';daysBadge=`<span class="insem-days ${cls}">${days} kun</span>`;}
+    return `<div class="insem-card"><div class="insem-card-left"><div class="insem-avatar">🐄</div><div>
+      <div style="font-weight:700">#${a.tag_number}${a.name?' — '+a.name:''}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${a.insemination_date?"Urug'langan: "+fmtDate(a.insemination_date):"Urug'lantirilmagan"}</div>
+      <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${statusBadge(a.status)}${daysBadge}</div>
+    </div></div><button class="btn btn-sm btn-ghost" onclick="openEditAnimal('${a.id}')">Tahrirlash</button></div>`;
+  }).join('');
+}
+
+// ── Warehouse ─────────────────────────────────────────────────────────────────
+const S_warehouse={items:[]};
+async function loadWarehouse(){
+  const[items,txs]=await Promise.all([GET('/warehouse/items'),GET('/warehouse/transactions?limit=20')]);
+  S_warehouse.items=items||[];
+  renderWarehouseStock(S_warehouse.items);
+  renderWarehouseTx(txs||[]);
+  renderWarehouseAlerts(S_warehouse.items);
+  const sel=document.getElementById('wh-tx-item');
+  sel.innerHTML='<option value="">Mahsulotni tanlang...</option>'+(S_warehouse.items||[]).map(i=>`<option value="${i.id}">${i.name} (${parseFloat(i.current_qty).toFixed(2)} ${i.unit})</option>`).join('');
+}
+function renderWarehouseAlerts(items){
+  const low=items.filter(i=>parseFloat(i.current_qty)>0&&parseFloat(i.current_qty)<parseFloat(i.min_qty));
+  const out=items.filter(i=>parseFloat(i.current_qty)<=0&&parseFloat(i.min_qty)>0);
+  let html='';
+  if(out.length) html+=`<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--r-sm);padding:11px 14px;margin-bottom:10px;font-size:13px;font-weight:600;color:#991b1b">Tugagan: ${out.map(i=>i.name).join(', ')}</div>`;
+  if(low.length) html+=`<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r-sm);padding:11px 14px;margin-bottom:10px;font-size:13px;font-weight:600;color:#92400e">Kam qolgan: ${low.map(i=>i.name+' ('+parseFloat(i.current_qty).toFixed(2)+' '+i.unit+')').join(', ')}</div>`;
+  document.getElementById('warehouse-alerts').innerHTML=html;
+}
+function renderWarehouseStock(items){
+  const el=document.getElementById('warehouse-stock');
+  if(!items||!items.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📦</div><div>Ombor bo\'sh</div></div>';return;}
+  const catIcons={em_xashak:'🌾',dori:'💊',uskunalar:'🔧',boshqa:'📦'};
+  el.innerHTML=items.map(i=>{
+    const qty=parseFloat(i.current_qty),min=parseFloat(i.min_qty);
+    const isLow=qty>0&&qty<min,isOut=qty<=0&&min>0;
+    const icon=catIcons[i.category]||'📦';
+    const alertHtml=isOut?'<div class="stock-alert out">Tugagan</div>':isLow?'<div class="stock-alert low">Kam qolgan</div>':'';
+    return `<div class="stock-card${isLow?' low-stock':''}${isOut?' out-of-stock':''}" onclick="openWarehouseItemModal('${i.id}')">
+      <div class="stock-card-icon">${icon}</div>
+      <div class="stock-name">${i.name}</div>
+      <div><span class="stock-amount">${qty.toLocaleString('ru-RU',{maximumFractionDigits:2})}</span> <span class="stock-unit">${i.unit}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Min: ${min} ${i.unit}</div>
+      ${alertHtml}
+    </div>`;
+  }).join('');
+}
+function renderWarehouseTx(txs){
+  const el=document.getElementById('warehouse-tx-list');
+  if(!txs||!txs.length){el.innerHTML='<div class="empty"><div>Hali harakat yo\'q</div></div>';return;}
+  el.innerHTML=txs.map(t=>`
+    <div class="warehouse-tx-item">
+      <div><div style="font-weight:600;font-size:14px">${t.item_name||'—'}</div><div style="font-size:12px;color:var(--muted)">${fmtDate(t.date)}${t.notes?' · '+t.notes:''}</div></div>
+      <div style="text-align:right">
+        <span class="tx-type-badge ${t.type==='in'?'tx-in':'tx-out'}">${t.type==='in'?'Kirim':'Chiqim'}</span>
+        <div style="font-weight:700;margin-top:4px;font-size:15px;color:${t.type==='in'?'var(--green)':'var(--red)'}">${t.type==='in'?'+':'-'}${parseFloat(t.qty).toLocaleString('ru-RU',{maximumFractionDigits:2})} ${t.unit||''}</div>
+      </div>
+    </div>`).join('');
+}
+function openWarehouseItemModal(id){
+  const item=id?S_warehouse.items.find(i=>i.id===id):null;
+  document.getElementById('wh-item-title').textContent=item?'Mahsulotni tahrirlash':"Mahsulot qo'shish";
+  document.getElementById('wh-item-edit-id').value=item?item.id:'';
+  document.getElementById('wh-item-name').value=item?item.name:'';
+  document.getElementById('wh-item-cat').value=item?(item.category||'em_xashak'):'em_xashak';
+  document.getElementById('wh-item-unit').value=item?(item.unit||'kg'):'kg';
+  document.getElementById('wh-item-qty').value=item?item.current_qty:0;
+  document.getElementById('wh-item-min').value=item?item.min_qty:0;
+  document.getElementById('wh-item-notes').value=item?(item.notes||''):'';
+  openModal('modal-warehouse-item');
+}
+async function submitWarehouseItem(){
+  const name=document.getElementById('wh-item-name').value.trim();
+  if(!name){showToast('Mahsulot nomi kerak','error');return;}
+  const editId=document.getElementById('wh-item-edit-id').value;
+  const body={name,category:document.getElementById('wh-item-cat').value,unit:document.getElementById('wh-item-unit').value,current_qty:parseFloat(document.getElementById('wh-item-qty').value)||0,min_qty:parseFloat(document.getElementById('wh-item-min').value)||0,notes:document.getElementById('wh-item-notes').value};
+  const res=editId?await PUT('/warehouse/items/'+editId,body):await POST('/warehouse/items',body);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast('Saqlandi','success');closeModal('modal-warehouse-item');loadWarehouse();
+}
+async function submitWarehouseTx(){
+  const itemId=document.getElementById('wh-tx-item').value;
+  const qty=parseFloat(document.getElementById('wh-tx-qty').value);
+  if(!itemId||!qty){showToast('Mahsulot va miqdor kerak','error');return;}
+  const res=await POST('/warehouse/transactions',{item_id:itemId,type:document.getElementById('wh-tx-type').value,qty,date:document.getElementById('wh-tx-date').value||today(),price:parseFloat(document.getElementById('wh-tx-price').value)||0,notes:document.getElementById('wh-tx-notes').value});
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast('Saqlandi','success');closeModal('modal-warehouse-tx');loadWarehouse();
+}
+
+// ── Equipment ─────────────────────────────────────────────────────────────────
+const S_equipment={list:[]};
+async function loadEquipment(){
+  const data=await GET('/equipment');
+  S_equipment.list=data||[];
+  const working=S_equipment.list.filter(e=>e.status==='working').length;
+  const repair=S_equipment.list.filter(e=>e.status==='repair').length;
+  const inactive=S_equipment.list.filter(e=>e.status==='inactive').length;
+  document.getElementById('equipment-stats').innerHTML=`
+    <div class="stat-card green"><div class="stat-label">Ishlamoqda</div><div class="stat-val">${working}</div><div class="stat-sub">ta texnika</div></div>
+    <div class="stat-card amber"><div class="stat-label">Ta'mirlashda</div><div class="stat-val">${repair}</div><div class="stat-sub">ta texnika</div></div>
+    <div class="stat-card red"><div class="stat-label">Ishlamayapti</div><div class="stat-val">${inactive}</div><div class="stat-sub">ta texnika</div></div>`;
+  renderEquipmentList(S_equipment.list);
+}
+function renderEquipmentList(list){
+  const el=document.getElementById('equipment-list');
+  if(!list||!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🚜</div><div>Texnika yo\'q</div></div>';return;}
+  const typeIcons={traktor:'🚜',sogim:'🥛',transport:'🚛',generator:'⚡',boshqa:'🔧'};
+  const statusLabels={working:'Ishlamoqda',repair:"Ta'mirlashda",inactive:'Ishlamayapti'};
+  el.innerHTML=list.map(e=>{
+    const icon=typeIcons[e.type]||'🔧';
+    return `<div class="equipment-card">
+      <div class="equip-icon ${e.status}">${icon}</div>
+      <div class="equip-info"><div class="equip-name">${e.name}</div>
+        <div class="equip-meta"><span>${e.type||'Texnika'}</span>${e.last_service?'<span>Oxirgi: '+fmtDate(e.last_service)+'</span>':''}${e.next_service?'<span>Keyingi: '+fmtDate(e.next_service)+'</span>':''}${e.notes?'<span>'+e.notes+'</span>':''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <span class="equip-status-badge ${e.status}">${statusLabels[e.status]||e.status}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm btn-ghost" onclick="openEquipmentModal('${e.id}')">Tahrirlash</button>
+          ${S.user&&S.user.role==='admin'?`<button class="btn btn-sm btn-danger" onclick="deleteEquipment('${e.id}')">O'chirish</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openEquipmentModal(id){
+  const e=id?S_equipment.list.find(x=>x.id===id):null;
+  document.getElementById('equip-modal-title').textContent=e?'Texnikani tahrirlash':"Texnika qo'shish";
+  document.getElementById('equip-edit-id').value=e?e.id:'';
+  document.getElementById('equip-name').value=e?e.name:'';
+  document.getElementById('equip-type').value=e?(e.type||'traktor'):'traktor';
+  document.getElementById('equip-status').value=e?(e.status||'working'):'working';
+  document.getElementById('equip-last-service').value=e&&e.last_service?e.last_service.split('T')[0]:'';
+  document.getElementById('equip-next-service').value=e&&e.next_service?e.next_service.split('T')[0]:'';
+  document.getElementById('equip-notes').value=e?(e.notes||''):'';
+  openModal('modal-equipment');
+}
+async function submitEquipment(){
+  const name=document.getElementById('equip-name').value.trim();
+  if(!name){showToast('Nom kerak','error');return;}
+  const editId=document.getElementById('equip-edit-id').value;
+  const body={name,type:document.getElementById('equip-type').value,status:document.getElementById('equip-status').value,last_service:document.getElementById('equip-last-service').value||null,next_service:document.getElementById('equip-next-service').value||null,notes:document.getElementById('equip-notes').value};
+  const res=editId?await PUT('/equipment/'+editId,body):await POST('/equipment',body);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast('Saqlandi','success');closeModal('modal-equipment');loadEquipment();
+}
+async function deleteEquipment(id){
+  if(!confirm("O'chirishni tasdiqlaysizmi?")) return;
+  const res=await DEL('/equipment/'+id);
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  showToast("O'chirildi");loadEquipment();
+}
+
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape') document.querySelectorAll('.modal-overlay').forEach(m=>m.style.display='none');
@@ -1683,6 +2039,7 @@ document.addEventListener('keydown',e=>{
 document.getElementById('milk-date').value=today();
 document.getElementById('e-date').value=today();
 document.getElementById('ms-date').value=today();
+document.getElementById('wh-tx-date').value=today();
 initAuth();
 
 // Password reset functions
