@@ -1,23 +1,18 @@
 /**
  * FermaApp — AndBillur Ferma boshqaruv tizimi
- * Fixed server.js — All bugs resolved
+ * server.js v3 — Family Tree (Ota/Ona/Bolalar) + temp_no_milk support
  *
- * CHANGELOG:
- * 1. [BUG FIX] pathId(): was extracting pos=2 from full /api/... URL,
- *    returning the route name ('animals') instead of the actual UUID.
- *    Now strips /api prefix before splitting -> correct ID at pos 2.
- * 2. [BUG FIX] GET:/animals/:id/milk — same pathId bug (parts[2] on full URL).
- * 3. [BUG FIX] PUT:/animals/:id — proper 404 when animal not found.
- * 4. [BUG FIX] POST:/sales — added 'soyish'->'soyildi' status mapping + try/catch.
- * 5. [BUG FIX] POST:/milk — now blocks milk entry for inactive animals.
- * 6. [BUG FIX] milk_records.price — ALTER TABLE migration makes column nullable.
- * 7. [NEW]    GET:/milk/stock — returns produced/sold/available inventory totals.
- * 8. [NEW]    POST:/milk-sales — stock check prevents overselling.
- * 9. [FIX]   Password reset — admin-only guard, proper Uzbek email template,
- *            IP + device info in email.
- * 10.[FIX]   password_resets table created inside main initDB flow.
- * 11.[FIX]   POST:/sales — animal existence + active status check.
- * 12.[CLEAN] Removed excessive debug console.log statements.
+ * CHANGELOG v3:
+ * 1. [NEW] animals.father_id / mother_id — ota/ona FK (nullable)
+ * 2. [NEW] animals.father_unknown / mother_unknown — suniy urug'lantirish yoki sotib olingan
+ * 3. [NEW] animals.acquisition_type — 'born' | 'purchased'
+ * 4. [NEW] animals.temp_no_milk — TEXT[] vaqtinchalik sut bermayapti sabablar
+ * 5. [NEW] GET /animals/:id/family — oila daraxti (ota, ona, bolalar)
+ * 6. [NEW] PUT /animals/:id/family — ota/ona va acquisition_type ni saqlash
+ * 7. [NEW] PUT /animals/:id/temp-no-milk — vaqtinchalik sut bermayapti sabablar
+ * 8. [FIX] GET /milk/daily — Buqa, Bozak, Sotilgan, Soyilgan, Nobud, va temp_no_milk
+ *          mollarini sut ro'yxatidan chiqaradi
+ * 9. All previous v2 bug fixes preserved
  */
 
 'use strict';
@@ -68,13 +63,29 @@ async function initDB() {
         last_calving_date DATE,
         insemination_date DATE,
         notes             TEXT,
+        -- Family tree
+        father_id         VARCHAR(32)  REFERENCES animals(id) ON DELETE SET NULL,
+        mother_id         VARCHAR(32)  REFERENCES animals(id) ON DELETE SET NULL,
+        father_unknown    BOOLEAN      DEFAULT false,
+        mother_unknown    BOOLEAN      DEFAULT false,
+        acquisition_type  VARCHAR(20)  DEFAULT 'born',
+        temp_no_milk      TEXT[],
         created_at        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
         updated_at        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    await pool.query(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS insemination_date DATE`).catch(() => {});
-    await pool.query(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS last_calving_date  DATE`).catch(() => {});
+    // Safe migration for existing DBs
+    const safeAlter = async (sql) => pool.query(sql).catch(() => {});
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS insemination_date    DATE`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS last_calving_date    DATE`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS father_id            VARCHAR(32) REFERENCES animals(id) ON DELETE SET NULL`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS mother_id            VARCHAR(32) REFERENCES animals(id) ON DELETE SET NULL`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS father_unknown       BOOLEAN DEFAULT false`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS mother_unknown       BOOLEAN DEFAULT false`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS acquisition_type     VARCHAR(20) DEFAULT 'born'`);
+    await safeAlter(`ALTER TABLE animals ADD COLUMN IF NOT EXISTS temp_no_milk         TEXT[]`);
 
     // milk_records — price is NOT stored here (production records only)
     await pool.query(`
@@ -88,11 +99,8 @@ async function initDB() {
         created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
       )
     `);
-
-    // BUG FIX #6: Old schema had price NOT NULL which broke milk creation.
-    // Drop the column if it exists (price belongs in milk_sales, not milk_records).
-    await pool.query(`ALTER TABLE milk_records DROP COLUMN IF EXISTS price`).catch(() => {});
-    await pool.query(`ALTER TABLE milk_records ADD COLUMN IF NOT EXISTS notes TEXT`).catch(() => {});
+    await safeAlter(`ALTER TABLE milk_records DROP COLUMN IF EXISTS price`);
+    await safeAlter(`ALTER TABLE milk_records ADD COLUMN IF NOT EXISTS notes TEXT`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS milk_sales (
@@ -132,9 +140,9 @@ async function initDB() {
         created_at TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await safeAlter(`ALTER TABLE animal_sales ADD COLUMN IF NOT EXISTS reason    VARCHAR(30)`);
+    await safeAlter(`ALTER TABLE animal_sales ADD COLUMN IF NOT EXISTS weight_kg DECIMAL(6,2)`);
 
-    // BUG FIX #10: password_resets used to be created in a separate function,
-    // which risked it being missing. Now always created on startup.
     await pool.query(`
       CREATE TABLE IF NOT EXISTS password_resets (
         id         SERIAL    PRIMARY KEY,
@@ -146,10 +154,19 @@ async function initDB() {
       )
     `);
 
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_milk_date   ON milk_records(date)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_milk_animal ON milk_records(animal_id)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ms_date     ON milk_sales(date)`);
-    await pool.query(`CREATE INDEX IF NOT EXISTS idx_exp_date    ON expenses(date)`);
+    // Indexes
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_milk_date     ON milk_records(date)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_milk_animal   ON milk_records(animal_id)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_ms_date       ON milk_sales(date)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_exp_date      ON expenses(date)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_animal_tag    ON animals(tag_number)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_animal_status ON animals(status)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_animal_father ON animals(father_id)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_animal_mother ON animals(mother_id)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_pw_reset_user ON password_resets(username)`);
+
+    // Fix bad status values
+    await pool.query(`UPDATE animals SET status='soyildi' WHERE status='soyish'`).catch(() => {});
 
     // Default admin user
     const ex = await pool.query(`SELECT id FROM users WHERE username=$1`, ['admin']);
@@ -160,10 +177,9 @@ async function initDB() {
       );
     }
 
-    // Housekeeping: remove expired reset codes older than 1 day
     await pool.query(`DELETE FROM password_resets WHERE expires_at < NOW() - INTERVAL '1 day'`).catch(() => {});
 
-    console.log('DB ready');
+    console.log('DB ready (v3 — Family Tree)');
   } catch (e) {
     console.error('DB init error:', e);
   }
@@ -231,27 +247,8 @@ function serveStatic(res, filePath) {
 }
 
 /**
- * BUG FIX #1 — pathId() Root Cause Explained
- *
- * BEFORE (broken):
- *   req.url = '/api/animals/abc123'
- *   new URL(...).pathname = '/api/animals/abc123'
- *   .split('/') = ['', 'api', 'animals', 'abc123']
- *   pos=2 -> 'animals'   <-- this was used as the animal ID!
- *
- * AFTER (fixed): strip /api first
- *   apiPath = '/animals/abc123'
- *   .split('/') = ['', 'animals', 'abc123']
- *   pos=2 -> 'abc123'   <-- correct UUID
- *
- * This ONE fix unblocks ALL broken dynamic routes:
- *   PUT    /animals/:id
- *   DELETE /animals/:id
- *   GET    /animals/:id/milk
- *   DELETE /milk/:id
- *   DELETE /milk-sales/:id
- *   DELETE /expenses/:id
- *   DELETE /users/:id
+ * pathId() — strips /api prefix before splitting so dynamic route IDs work
+ * correctly.  See v2 BUG FIX #1 for full explanation.
  */
 function pathId(url, pos) {
   const apiPath = new URL(url, 'http://localhost').pathname.replace('/api', '');
@@ -267,64 +264,42 @@ function parseCookies(req) {
 }
 
 // ---------------------------------------------------------------------------
-// Email (nodemailer — optional, falls back to console in dev)
+// Statuses that can NEVER produce milk
+// ---------------------------------------------------------------------------
+const NEVER_MILK_STATUSES = ['sotildi', 'nobud', 'soyildi', 'buqa', 'bozak', 'sotib_olingan_bozak'];
+
+// Statuses that CAN be in milk daily list but may be temporarily blocked
+const ACTIVE_STATUSES_FOR_MILK = ['sut_beradi', 'kasal', 'bogoz'];
+
+// ---------------------------------------------------------------------------
+// Email (nodemailer — optional)
 // ---------------------------------------------------------------------------
 let nodemailer = null;
-try {
-  nodemailer = require('nodemailer');
-} catch (_) {
-  console.warn('nodemailer not installed. Run `npm install` to enable email sending.');
-}
+try { nodemailer = require('nodemailer'); } catch (_) {}
 
 function buildTransporter() {
   if (!nodemailer) return null;
   const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!pass) {
-    console.warn('GMAIL_APP_PASSWORD env var not set — emails will be logged to console only.');
-    return null;
-  }
+  if (!pass) return null;
   return nodemailer.createTransport({
     service: 'gmail',
-    host:    'smtp.gmail.com',
-    port:    465,
-    secure:  true,
-    auth:    { user: 'info@andbillur.com', pass },
-    tls:     { rejectUnauthorized: false },
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user: 'info@andbillur.com', pass },
+    tls: { rejectUnauthorized: false },
   });
 }
 
-/**
- * BUG FIX #9 — sendResetEmail() now sends the proper Uzbek template
- * with the 6-digit code, expiry time, IP address and device info.
- * Target address is always info@andbillur.com (never the user's email).
- */
 async function sendResetEmail({ code, displayName, ip, device, expiresAt }) {
   const expireTime = new Date(expiresAt).toLocaleString('uz-UZ', {
     timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit',
   });
   const dateTime = new Date().toLocaleString('uz-UZ', {
-    timeZone:  'Asia/Tashkent',
-    year:      'numeric', month: '2-digit', day: '2-digit',
-    hour:      '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Tashkent',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
   });
-
-  const textBody = [
-    `Salom ${displayName},`,
-    '',
-    `Siz ferma.andbillur.com hisobingiz uchun parolni o'zgartirish so'rovini yubordingiz.`,
-    '',
-    `Tasdiqlash kodi: ${code}`,
-    '',
-    `Amal qilish muddati: ${expireTime}`,
-    '',
-    `Agar siz bo'lmasangiz — hech narsa qilmang.`,
-    '',
-    `Sana: ${dateTime}`,
-    `IP: ${ip}`,
-    `Qurilma: ${device}`,
-    '',
-    '— AndBillur Ferma tizimi',
-  ].join('\n');
 
   const htmlBody = `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1e293b">
@@ -332,27 +307,13 @@ async function sendResetEmail({ code, displayName, ip, device, expiresAt }) {
     <h2 style="color:#fff;margin:0;font-size:18px">AndBillur Ferma tizimi</h2>
   </div>
   <div style="border:1px solid #e2e8f0;border-top:none;padding:28px 24px;border-radius:0 0 12px 12px">
-    <p style="margin-top:0">Salom <strong>${displayName}</strong>,</p>
-    <p>Siz <strong>ferma.andbillur.com</strong> hisobingiz uchun
-       parolni o'zgartirish so'rovini yubordingiz.</p>
-    <div style="background:#eff6ff;border:2px solid #bfdbfe;border-radius:10px;
-                padding:24px;text-align:center;margin:24px 0">
-      <p style="margin:0 0 8px;color:#64748b;font-size:13px">Tasdiqlash kodi</p>
-      <div style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1d4ed8">
-        ${code}
-      </div>
-      <p style="margin:12px 0 0;color:#64748b;font-size:13px">
-        &#8987; Amal qilish muddati: <strong>${expireTime}</strong>
-      </p>
+    <p>Salom <strong>${displayName}</strong>,</p>
+    <p>Parolni o'zgartirish so'rovi.</p>
+    <div style="background:#eff6ff;border:2px solid #bfdbfe;border-radius:10px;padding:24px;text-align:center;margin:24px 0">
+      <div style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1d4ed8">${code}</div>
+      <p style="color:#64748b;font-size:13px">Amal qilish muddati: <strong>${expireTime}</strong></p>
     </div>
-    <p>Agar siz bo'lmasangiz — hech narsa qilmang. Hech qanday o'zgarish bo'lmaydi.</p>
-    <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0">
-    <p style="color:#94a3b8;font-size:12px;line-height:1.9;margin:0">
-      &#128197; ${dateTime}<br>
-      &#127760; IP: ${ip}<br>
-      &#128187; Qurilma: ${device}
-    </p>
-    <p style="color:#94a3b8;font-size:12px;margin-bottom:0">— AndBillur Ferma tizimi</p>
+    <p style="color:#94a3b8;font-size:12px">${dateTime} | IP: ${ip} | ${device}</p>
   </div>
 </div>`;
 
@@ -360,26 +321,18 @@ async function sendResetEmail({ code, displayName, ip, device, expiresAt }) {
   if (transporter) {
     try {
       await transporter.sendMail({
-        from:    '"AndBillur Ferma" <info@andbillur.com>',
-        to:      'info@andbillur.com',
+        from: '"AndBillur Ferma" <info@andbillur.com>',
+        to: 'info@andbillur.com',
         subject: `Parolni o'zgartirish — ${displayName}`,
-        text:    textBody,
-        html:    htmlBody,
+        html: htmlBody,
       });
-      console.log(`Reset email sent for: ${displayName}`);
       return true;
     } catch (err) {
       console.error('Email send failed:', err.message);
       return false;
     }
   } else {
-    // Dev fallback
-    console.log('\n=== PASSWORD RESET CODE ===');
-    console.log(`User   : ${displayName}`);
-    console.log(`Code   : ${code}`);
-    console.log(`Expires: ${expireTime}`);
-    console.log(`IP     : ${ip}`);
-    console.log('===========================\n');
+    console.log(`\n=== RESET CODE for ${displayName}: ${code} (expires ${expireTime}) ===\n`);
     return true;
   }
 }
@@ -401,10 +354,7 @@ const routes = {
     const user  = r.rows[0];
     const token = createSession(user.id);
     const isProd = process.env.NODE_ENV === 'production';
-    res.setHeader(
-      'Set-Cookie',
-      `token=${token}; Path=/; HttpOnly; SameSite=Lax${isProd ? '; Secure' : ''}`
-    );
+    res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax${isProd ? '; Secure' : ''}`);
     json(res, { token, user: { id: user.id, username: user.username, role: user.role, name: user.name } });
   },
 
@@ -429,45 +379,19 @@ const routes = {
         return json(res, { error: 'Username kerak (kamida 2 belgi)' }, 400);
       }
       const uname = username.trim();
-
-      // BUG FIX #9: Admin-only restriction
-      const userRow = await pool.query(
-        'SELECT id, name, role FROM users WHERE username=$1',
-        [uname]
-      );
-      if (!userRow.rows[0]) {
-        // Return generic success to avoid user-enumeration
-        return json(res, { success: true, message: 'Tasdiqlash kodi admin emailiga yuborildi' });
-      }
-      if (userRow.rows[0].role !== 'admin') {
-        return json(res, { error: 'Faqat admin parolini tiklash mumkin' }, 403);
-      }
+      const userRow = await pool.query('SELECT id, name, role FROM users WHERE username=$1', [uname]);
+      if (!userRow.rows[0]) return json(res, { success: true, message: 'Tasdiqlash kodi admin emailiga yuborildi' });
+      if (userRow.rows[0].role !== 'admin') return json(res, { error: 'Faqat admin parolini tiklash mumkin' }, 403);
 
       const code      = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await pool.query('INSERT INTO password_resets (username, code, expires_at) VALUES ($1, $2, $3)', [uname, code, expiresAt]);
 
-      await pool.query(
-        'INSERT INTO password_resets (username, code, expires_at) VALUES ($1, $2, $3)',
-        [uname, code, expiresAt]
-      );
-
-      const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-               || req.socket?.remoteAddress
-               || 'Unknown';
+      const ip     = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'Unknown';
       const device = (req.headers['user-agent'] || 'Unknown').substring(0, 150);
+      const sent   = await sendResetEmail({ code, displayName: userRow.rows[0].name || uname, ip, device, expiresAt });
 
-      const sent = await sendResetEmail({
-        code,
-        displayName: userRow.rows[0].name || uname,
-        ip,
-        device,
-        expiresAt,
-      });
-
-      if (!sent) {
-        return json(res, { error: "Email yuborishda xatolik. Keyinroq urinib ko'ring." }, 500);
-      }
-
+      if (!sent) return json(res, { error: "Email yuborishda xatolik." }, 500);
       json(res, { success: true, message: 'Tasdiqlash kodi admin emailiga yuborildi' });
     } catch (e) {
       console.error('password-reset-request error:', e);
@@ -478,48 +402,24 @@ const routes = {
   'POST:/admin/password-reset-confirm': async (req, res) => {
     try {
       const { username, code, newPassword } = await parseBody(req);
-      if (!username || !code || !newPassword) {
-        return json(res, { error: 'Username, kod va yangi parol kerak' }, 400);
-      }
-      if (newPassword.length < 6) {
-        return json(res, { error: "Parol kamida 6 ta belgidan iborat bo'lishi kerak" }, 400);
-      }
+      if (!username || !code || !newPassword) return json(res, { error: 'Username, kod va yangi parol kerak' }, 400);
+      if (newPassword.length < 6) return json(res, { error: "Parol kamida 6 belgidan iborat bo'lishi kerak" }, 400);
 
       const resetRow = await pool.query(
-        `SELECT id, expires_at, used
-           FROM password_resets
-          WHERE username=$1 AND code=$2
-          ORDER BY created_at DESC LIMIT 1`,
+        `SELECT id, expires_at, used FROM password_resets WHERE username=$1 AND code=$2 ORDER BY created_at DESC LIMIT 1`,
         [username, code]
       );
-      if (!resetRow.rows[0]) {
-        return json(res, { error: "Noto'g'ri tasdiqlash kodi" }, 400);
-      }
+      if (!resetRow.rows[0]) return json(res, { error: "Noto'g'ri tasdiqlash kodi" }, 400);
       const reset = resetRow.rows[0];
-      if (reset.used) {
-        return json(res, { error: 'Bu kod allaqachon ishlatilgan' }, 400);
-      }
-      if (new Date() > new Date(reset.expires_at)) {
-        return json(res, { error: "Kodning muddati o'tgan. Yangi kod so'rang." }, 400);
-      }
+      if (reset.used) return json(res, { error: 'Bu kod allaqachon ishlatilgan' }, 400);
+      if (new Date() > new Date(reset.expires_at)) return json(res, { error: "Kodning muddati o'tgan." }, 400);
 
-      // Re-verify admin role
       const userRow = await pool.query('SELECT id, role FROM users WHERE username=$1', [username]);
-      if (!userRow.rows[0]) {
-        return json(res, { error: 'Foydalanuvchi topilmadi' }, 404);
-      }
-      if (userRow.rows[0].role !== 'admin') {
-        return json(res, { error: 'Faqat admin parolini tiklash mumkin' }, 403);
-      }
+      if (!userRow.rows[0]) return json(res, { error: 'Foydalanuvchi topilmadi' }, 404);
+      if (userRow.rows[0].role !== 'admin') return json(res, { error: 'Faqat admin parolini tiklash mumkin' }, 403);
 
-      await pool.query(
-        'UPDATE users SET password=$1 WHERE id=$2',
-        [hashPassword(newPassword), userRow.rows[0].id]
-      );
-
-      // One-time use: mark code as used
+      await pool.query('UPDATE users SET password=$1 WHERE id=$2', [hashPassword(newPassword), userRow.rows[0].id]);
       await pool.query('UPDATE password_resets SET used=true WHERE id=$1', [reset.id]);
-
       json(res, { success: true, message: "Parol muvaffaqiyatli o'zgartirildi" });
     } catch (e) {
       console.error('password-reset-confirm error:', e);
@@ -615,15 +515,15 @@ const routes = {
       const byCat = {};
       byCatR.rows.forEach(r => { byCat[r.category] = parseFloat(r.tot); });
 
-      const milkRevenue  = parseFloat(ms.rows[0].rev);
-      const salesRevenue = parseFloat(as2.rows[0].rev);
-      const totalExp     = parseFloat(ex.rows[0].tot);
       json(res, {
-        milkRevenue, milkLiters: parseFloat(ms.rows[0].liters),
-        salesRevenue, salesCount: parseInt(as2.rows[0].cnt),
-        totalExpenses: totalExp, expCount: parseInt(ex.rows[0].cnt),
-        netProfit: milkRevenue + salesRevenue - totalExp,
-        chart: Object.values(map).sort((a, b) => a.date.localeCompare(b.date)),
+        milkRevenue:  parseFloat(ms.rows[0].rev),
+        milkLiters:   parseFloat(ms.rows[0].liters),
+        salesRevenue: parseFloat(as2.rows[0].rev),
+        salesCount:   parseInt(as2.rows[0].cnt),
+        totalExpenses: parseFloat(ex.rows[0].tot),
+        expCount:     parseInt(ex.rows[0].cnt),
+        netProfit:    parseFloat(ms.rows[0].rev) + parseFloat(as2.rows[0].rev) - parseFloat(ex.rows[0].tot),
+        chart:        Object.values(map).sort((a, b) => a.date.localeCompare(b.date)),
         byCat,
       });
     } catch (e) {
@@ -669,11 +569,23 @@ const routes = {
       const ex = await pool.query('SELECT id FROM animals WHERE tag_number=$1', [d.tag_number]);
       if (ex.rows.length) return json(res, { error: `"${d.tag_number}" quloq raqami allaqachon mavjud` }, 400);
       const id = uuid();
+
+      // Validate father/mother IDs if provided
+      if (d.father_id) {
+        const fa = await pool.query('SELECT id FROM animals WHERE id=$1', [d.father_id]);
+        if (!fa.rows.length) return json(res, { error: 'Ota mol topilmadi' }, 400);
+      }
+      if (d.mother_id) {
+        const mo = await pool.query('SELECT id FROM animals WHERE id=$1', [d.mother_id]);
+        if (!mo.rows.length) return json(res, { error: 'Ona mol topilmadi' }, 400);
+      }
+
       await pool.query(
         `INSERT INTO animals
-           (id,tag_number,name,type,gender,status,births,daily_milk,
-            birth_date,last_calving_date,insemination_date,notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+           (id, tag_number, name, type, gender, status, births, daily_milk,
+            birth_date, last_calving_date, insemination_date, notes,
+            father_id, mother_id, father_unknown, mother_unknown, acquisition_type, temp_no_milk)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
         [
           id, d.tag_number, d.name || null,
           d.type || 'sigir', d.gender || 'female',
@@ -681,6 +593,10 @@ const routes = {
           d.births || 0, d.daily_milk || 0,
           d.birth_date || null, d.last_calving_date || null,
           d.insemination_date || null, d.notes || null,
+          d.father_id || null, d.mother_id || null,
+          d.father_unknown || false, d.mother_unknown || false,
+          d.acquisition_type || 'born',
+          d.temp_no_milk && d.temp_no_milk.length ? d.temp_no_milk : null,
         ]
       );
       const r = await pool.query('SELECT * FROM animals WHERE id=$1', [id]);
@@ -691,46 +607,49 @@ const routes = {
     }
   },
 
-  // BUG FIX #1 + #3 — pathId now correct; added 404 on not-found
   'PUT:/animals/:id': async (req, res) => {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
-      const id = pathId(req.url, 2); // FIX #1
+      const id = pathId(req.url, 2);
       if (!id) return json(res, { error: 'Animal ID kerak' }, 400);
       const d = await parseBody(req);
       if (!d.tag_number) return json(res, { error: 'Quloq raqami kerak' }, 400);
 
-      // Verify animal exists (FIX #3)
       const current = await pool.query('SELECT id, tag_number FROM animals WHERE id=$1', [id]);
       if (!current.rows[0]) return json(res, { error: 'Mol topilmadi' }, 404);
 
-      // Tag uniqueness check (only if changed)
       if (current.rows[0].tag_number !== d.tag_number) {
-        const conflict = await pool.query(
-          'SELECT id, name FROM animals WHERE tag_number=$1 AND id!=$2',
-          [d.tag_number, id]
-        );
+        const conflict = await pool.query('SELECT id, name FROM animals WHERE tag_number=$1 AND id!=$2', [d.tag_number, id]);
         if (conflict.rows.length) {
           return json(res, {
-            error: `"${d.tag_number}" quloq raqami allaqachon mavjud` +
-                   (conflict.rows[0].name ? ` (${conflict.rows[0].name})` : ''),
+            error: `"${d.tag_number}" quloq raqami allaqachon mavjud` + (conflict.rows[0].name ? ` (${conflict.rows[0].name})` : ''),
           }, 400);
         }
       }
+
+      // Prevent self-reference
+      if (d.father_id === id) return json(res, { error: 'Mol o\'z otasi bo\'la olmaydi' }, 400);
+      if (d.mother_id === id) return json(res, { error: 'Mol o\'z onasi bo\'la olmaydi' }, 400);
 
       await pool.query(
         `UPDATE animals
             SET tag_number=$1, name=$2, type=$3, gender=$4, status=$5,
                 births=$6, daily_milk=$7, birth_date=$8,
                 last_calving_date=$9, insemination_date=$10, notes=$11,
+                father_id=$12, mother_id=$13, father_unknown=$14, mother_unknown=$15,
+                acquisition_type=$16, temp_no_milk=$17,
                 updated_at=CURRENT_TIMESTAMP
-          WHERE id=$12`,
+          WHERE id=$18`,
         [
           d.tag_number, d.name || null, d.type, d.gender, d.status,
           d.births || 0, d.daily_milk || 0,
           d.birth_date || null, d.last_calving_date || null,
           d.insemination_date || null, d.notes || null,
+          d.father_id || null, d.mother_id || null,
+          d.father_unknown || false, d.mother_unknown || false,
+          d.acquisition_type || 'born',
+          d.temp_no_milk && d.temp_no_milk.length ? d.temp_no_milk : null,
           id,
         ]
       );
@@ -747,7 +666,7 @@ const routes = {
     const u = await adminAuth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
-      const id = pathId(req.url, 2); // FIX #1
+      const id = pathId(req.url, 2);
       const r  = await pool.query('DELETE FROM animals WHERE id=$1 RETURNING *', [id]);
       if (!r.rows.length) return json(res, { error: 'Mol topilmadi' }, 404);
       json(res, { success: true });
@@ -757,12 +676,163 @@ const routes = {
     }
   },
 
-  // BUG FIX #1 + #2 — was using parts[2] on full /api/animals/:id/milk URL
+  // ── NEW: Family Tree ───────────────────────────────────────────────────────
+
+  /**
+   * GET /animals/:id/family
+   * Returns: { animal, father, mother, children[] }
+   * - father/mother may be null (unknown) or have acquisition_type info
+   * - children are animals whose father_id OR mother_id === this animal's id
+   */
+  'GET:/animals/:id/family': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const id = pathId(req.url, 2);
+      const animalR = await pool.query('SELECT * FROM animals WHERE id=$1', [id]);
+      if (!animalR.rows[0]) return json(res, { error: 'Mol topilmadi' }, 404);
+      const animal = animalR.rows[0];
+
+      // Load father and mother if ID is set
+      const [fatherR, motherR, childrenR] = await Promise.all([
+        animal.father_id
+          ? pool.query('SELECT id, tag_number, name, type, gender, status FROM animals WHERE id=$1', [animal.father_id])
+          : Promise.resolve({ rows: [] }),
+        animal.mother_id
+          ? pool.query('SELECT id, tag_number, name, type, gender, status FROM animals WHERE id=$1', [animal.mother_id])
+          : Promise.resolve({ rows: [] }),
+        // Children: any animal that has this animal as father OR mother
+        pool.query(
+          `SELECT id, tag_number, name, type, gender, status, birth_date
+             FROM animals
+            WHERE father_id=$1 OR mother_id=$1
+            ORDER BY birth_date DESC NULLS LAST, created_at DESC`,
+          [id]
+        ),
+      ]);
+
+      json(res, {
+        animal,
+        father:        fatherR.rows[0] || null,
+        father_unknown: animal.father_unknown,
+        mother:        motherR.rows[0] || null,
+        mother_unknown: animal.mother_unknown,
+        acquisition_type: animal.acquisition_type,
+        children:      childrenR.rows,
+      });
+    } catch (e) {
+      console.error('GET /animals/:id/family error:', e);
+      json(res, { error: 'Server xatosi' }, 500);
+    }
+  },
+
+  /**
+   * PUT /animals/:id/family
+   * Body: {
+   *   father_id: string|null,      // ID of father animal (null = unknown/not set)
+   *   father_unknown: bool,        // true = suniy urug'lantirish or otasi noma'lum
+   *   mother_id: string|null,
+   *   mother_unknown: bool,        // true = onasi noma'lum (sotib olingan)
+   *   acquisition_type: 'born'|'purchased'
+   * }
+   * Only updates family fields; other fields unchanged.
+   */
+  'PUT:/animals/:id/family': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const id = pathId(req.url, 2);
+      const current = await pool.query('SELECT id FROM animals WHERE id=$1', [id]);
+      if (!current.rows[0]) return json(res, { error: 'Mol topilmadi' }, 404);
+
+      const d = await parseBody(req);
+
+      // Validate referenced IDs exist
+      if (d.father_id) {
+        if (d.father_id === id) return json(res, { error: 'Mol o\'z otasi bo\'la olmaydi' }, 400);
+        const fa = await pool.query('SELECT id FROM animals WHERE id=$1', [d.father_id]);
+        if (!fa.rows.length) return json(res, { error: 'Ota mol topilmadi' }, 400);
+      }
+      if (d.mother_id) {
+        if (d.mother_id === id) return json(res, { error: 'Mol o\'z onasi bo\'la olmaydi' }, 400);
+        const mo = await pool.query('SELECT id FROM animals WHERE id=$1', [d.mother_id]);
+        if (!mo.rows.length) return json(res, { error: 'Ona mol topilmadi' }, 400);
+      }
+
+      await pool.query(
+        `UPDATE animals
+            SET father_id=$1, mother_id=$2,
+                father_unknown=$3, mother_unknown=$4,
+                acquisition_type=$5,
+                updated_at=CURRENT_TIMESTAMP
+          WHERE id=$6`,
+        [
+          d.father_id || null,
+          d.mother_id || null,
+          d.father_unknown || false,
+          d.mother_unknown || false,
+          d.acquisition_type || 'born',
+          id,
+        ]
+      );
+      const r = await pool.query(
+        `SELECT id, tag_number, name, father_id, mother_id,
+                father_unknown, mother_unknown, acquisition_type
+           FROM animals WHERE id=$1`,
+        [id]
+      );
+      json(res, r.rows[0]);
+    } catch (e) {
+      console.error('PUT /animals/:id/family error:', e);
+      json(res, { error: 'Server xatosi: ' + e.message }, 500);
+    }
+  },
+
+  /**
+   * PUT /animals/:id/temp-no-milk
+   * Body: { reasons: string[] }
+   * reasons can include: 'kasal', 'homilador', 'boshqa'
+   * Empty array = vaqtinchalik to'siq olib tashlash
+   *
+   * Note: Only applies to animals whose base status allows milk
+   * (sut_beradi, kasal, bogoz). For Buqa/Bozak/Sotilgan etc — already blocked.
+   */
+  'PUT:/animals/:id/temp-no-milk': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const id = pathId(req.url, 2);
+      const animalR = await pool.query('SELECT id, status FROM animals WHERE id=$1', [id]);
+      if (!animalR.rows[0]) return json(res, { error: 'Mol topilmadi' }, 404);
+
+      if (NEVER_MILK_STATUSES.includes(animalR.rows[0].status)) {
+        return json(res, {
+          error: `Bu mol (${animalR.rows[0].status}) sut bermaydi. Vaqtinchalik to'siq shart emas.`,
+        }, 400);
+      }
+
+      const d = await parseBody(req);
+      const reasons = Array.isArray(d.reasons) ? d.reasons.filter(r => r) : [];
+      const allowed = ['kasal', 'homilador', 'boshqa'];
+      const invalid = reasons.filter(r => !allowed.includes(r));
+      if (invalid.length) return json(res, { error: `Noto'g'ri sabab: ${invalid.join(', ')}` }, 400);
+
+      await pool.query(
+        `UPDATE animals SET temp_no_milk=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2`,
+        [reasons.length ? reasons : null, id]
+      );
+      json(res, { success: true, temp_no_milk: reasons });
+    } catch (e) {
+      console.error('PUT /animals/:id/temp-no-milk error:', e);
+      json(res, { error: 'Server xatosi' }, 500);
+    }
+  },
+
   'GET:/animals/:id/milk': async (req, res) => {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
-      const id   = pathId(req.url, 2); // FIX #1 + #2
+      const id   = pathId(req.url, 2);
       const days = parseInt(new URL(req.url, 'http://localhost').searchParams.get('days') || '30');
       const r    = await pool.query(
         `SELECT date::text,
@@ -813,14 +883,23 @@ const routes = {
     }
   },
 
+  /**
+   * GET /milk/daily?date=YYYY-MM-DD
+   * Returns only animals that CAN currently produce milk:
+   *   - status NOT IN NEVER_MILK_STATUSES (sotildi, nobud, soyildi, buqa, bozak, sotib_olingan_bozak)
+   *   - AND (temp_no_milk IS NULL OR temp_no_milk = '{}')
+   * Also returns animals that have temp_no_milk set (separately flagged) so UI can show them.
+   */
   'GET:/milk/daily': async (req, res) => {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
       const date = new URL(req.url, 'http://localhost').searchParams.get('date')
                  || new Date().toISOString().split('T')[0];
+      const neverList = NEVER_MILK_STATUSES.map((s, i) => `$${i + 2}`).join(',');
       const r = await pool.query(
         `SELECT a.id, a.tag_number, a.name, a.status, a.daily_milk AS expected,
+                a.temp_no_milk,
                 MAX(CASE WHEN mr.session=1 THEN mr.liters END) AS s1,
                 MAX(CASE WHEN mr.session=2 THEN mr.liters END) AS s2,
                 MAX(CASE WHEN mr.session=1 THEN mr.id END)     AS s1_id,
@@ -828,16 +907,22 @@ const routes = {
                 COALESCE(SUM(mr.liters), 0) AS total
            FROM animals a
            LEFT JOIN milk_records mr ON a.id = mr.animal_id AND mr.date=$1
-          WHERE a.status NOT IN ('sotildi','nobud','soyildi')
-          GROUP BY a.id, a.tag_number, a.name, a.status, a.daily_milk
+          WHERE a.status NOT IN (${neverList})
+          GROUP BY a.id, a.tag_number, a.name, a.status, a.daily_milk, a.temp_no_milk
           ORDER BY (a.status='sut_beradi') DESC, a.tag_number`,
-        [date]
+        [date, ...NEVER_MILK_STATUSES]
       );
       json(res, r.rows.map(row => ({
-        id: row.id, tag_number: row.tag_number, name: row.name, status: row.status,
-        expected: parseFloat(row.expected || 0),
-        s1: row.s1 ? parseFloat(row.s1) : null, s1_id: row.s1_id,
-        s2: row.s2 ? parseFloat(row.s2) : null, s2_id: row.s2_id,
+        id:          row.id,
+        tag_number:  row.tag_number,
+        name:        row.name,
+        status:      row.status,
+        expected:    parseFloat(row.expected || 0),
+        temp_no_milk: row.temp_no_milk || [],
+        // can_add_milk: true only if no temp_no_milk reasons
+        can_add_milk: !row.temp_no_milk || row.temp_no_milk.length === 0,
+        s1:    row.s1 ? parseFloat(row.s1) : null, s1_id: row.s1_id,
+        s2:    row.s2 ? parseFloat(row.s2) : null, s2_id: row.s2_id,
         total: parseFloat(row.total),
       })));
     } catch (e) {
@@ -846,7 +931,6 @@ const routes = {
     }
   },
 
-  // NEW #7 — Milk inventory / stock
   'GET:/milk/stock': async (req, res) => {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
@@ -857,15 +941,13 @@ const routes = {
       ]);
       const produced  = parseFloat(prodR.rows[0].total);
       const sold      = parseFloat(soldR.rows[0].total);
-      const available = Math.max(0, produced - sold);
-      json(res, { produced, sold, available });
+      json(res, { produced, sold, available: Math.max(0, produced - sold) });
     } catch (e) {
       console.error('GET /milk/stock error:', e);
       json(res, { error: 'Server xatosi' }, 500);
     }
   },
 
-  // BUG FIX #5 — blocks milk entry for inactive animals
   'POST:/milk': async (req, res) => {
     try {
       const u = await auth(req);
@@ -876,12 +958,27 @@ const routes = {
       if (!d.liters)    return json(res, { error: 'Litr miqdorini kiriting' }, 400);
       if (!d.session)   return json(res, { error: 'Soqim sessiyasini tanlang' }, 400);
 
-      // FIX #5: Block milk for inactive animals
-      const animalRow = await pool.query('SELECT status FROM animals WHERE id=$1', [d.animal_id]);
+      const animalRow = await pool.query('SELECT status, temp_no_milk FROM animals WHERE id=$1', [d.animal_id]);
       if (!animalRow.rows[0]) return json(res, { error: 'Mol topilmadi' }, 404);
-      if (['sotildi', 'nobud', 'soyildi'].includes(animalRow.rows[0].status)) {
+      const { status, temp_no_milk } = animalRow.rows[0];
+
+      // Hard block for never-milk statuses
+      if (NEVER_MILK_STATUSES.includes(status)) {
         return json(res, {
-          error: `Bu mol faol emas (${animalRow.rows[0].status}). Sut qayd qilish mumkin emas.`,
+          error: `Bu mol faol emas (${status}). Sut qayd qilish mumkin emas.`,
+        }, 400);
+      }
+
+      // Soft block for temp_no_milk
+      if (temp_no_milk && temp_no_milk.length > 0) {
+        const labels = {
+          kasal:      'Kasal',
+          homilador:  'Homilador',
+          boshqa:     'Boshqa sabab',
+        };
+        const reasons = temp_no_milk.map(r => labels[r] || r).join(', ');
+        return json(res, {
+          error: `Bu mol vaqtinchalik sut bermayapti: ${reasons}.`,
         }, 400);
       }
 
@@ -918,7 +1015,7 @@ const routes = {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
-      const id = pathId(req.url, 2); // FIX #1
+      const id = pathId(req.url, 2);
       const r  = await pool.query('DELETE FROM milk_records WHERE id=$1 RETURNING *', [id]);
       if (!r.rows.length) return json(res, { error: 'Qayd topilmadi' }, 404);
       json(res, { success: true });
@@ -952,21 +1049,15 @@ const routes = {
     }
   },
 
-  // NEW #8 — Stock check before allowing a sale
   'POST:/milk-sales': async (req, res) => {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
       const d = await parseBody(req);
-      if (!d.liters || !d.price || !d.buyer) {
-        return json(res, { error: 'Miqdor, narx va xaridor kerak' }, 400);
-      }
+      if (!d.liters || !d.price || !d.buyer) return json(res, { error: 'Miqdor, narx va xaridor kerak' }, 400);
       const liters = parseFloat(d.liters);
-      if (isNaN(liters) || liters <= 0) {
-        return json(res, { error: "Litr miqdori noto'g'ri" }, 400);
-      }
+      if (isNaN(liters) || liters <= 0) return json(res, { error: "Litr miqdori noto'g'ri" }, 400);
 
-      // FIX #8: Prevent selling more than available
       const stockR = await pool.query(`
         SELECT
           COALESCE((SELECT SUM(liters) FROM milk_records),0) -
@@ -997,7 +1088,7 @@ const routes = {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
-      const id = pathId(req.url, 2); // FIX #1
+      const id = pathId(req.url, 2);
       const r  = await pool.query('DELETE FROM milk_sales WHERE id=$1 RETURNING *', [id]);
       if (!r.rows.length) return json(res, { error: 'Sotuv topilmadi' }, 404);
       json(res, { success: true });
@@ -1044,7 +1135,7 @@ const routes = {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
-      const id = pathId(req.url, 2); // FIX #1
+      const id = pathId(req.url, 2);
       const r  = await pool.query('DELETE FROM expenses WHERE id=$1 RETURNING *', [id]);
       if (!r.rows.length) return json(res, { error: 'Harajat topilmadi' }, 404);
       json(res, { success: true });
@@ -1094,7 +1185,7 @@ const routes = {
     const u = await adminAuth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
     try {
-      const id = pathId(req.url, 2); // FIX #1
+      const id = pathId(req.url, 2);
       if (id === u.id) return json(res, { error: "O'z o'zingizni o'chira olmaysiz" }, 400);
       const r = await pool.query('DELETE FROM users WHERE id=$1 RETURNING *', [id]);
       if (!r.rows.length) return json(res, { error: 'Foydalanuvchi topilmadi' }, 404);
@@ -1106,7 +1197,6 @@ const routes = {
   },
 
   // ── Animal Sales (Sell / Slaughter / Dead) ─────────────────────────────────
-  // BUG FIX #4 + #11: correct status mapping + validation + try/catch
   'POST:/sales': async (req, res) => {
     const u = await auth(req);
     if (!u) return json(res, { error: 'Unauthorized' }, 401);
@@ -1115,7 +1205,6 @@ const routes = {
       if (!d.animal_id) return json(res, { error: 'Mol ID kerak' }, 400);
       if (!d.date)      return json(res, { error: 'Sana kerak' }, 400);
 
-      // FIX #11: Verify animal exists and is currently active
       const animalRow = await pool.query('SELECT id, status FROM animals WHERE id=$1', [d.animal_id]);
       if (!animalRow.rows[0]) return json(res, { error: 'Mol topilmadi' }, 404);
       if (['sotildi', 'nobud', 'soyildi'].includes(animalRow.rows[0].status)) {
@@ -1124,12 +1213,11 @@ const routes = {
         }, 400);
       }
 
-      // FIX #4: All three reason types now map to the correct status
       let newStatus;
       switch (d.reason) {
-        case 'nobud':  newStatus = 'nobud';   break; // Dead / lost
-        case 'soyish': newStatus = 'soyildi'; break; // Slaughtered
-        default:       newStatus = 'sotildi'; break; // Sold ('sotish')
+        case 'nobud':  newStatus = 'nobud';   break;
+        case 'soyish': newStatus = 'soyildi'; break;
+        default:       newStatus = 'sotildi'; break;
       }
 
       const id = uuid();
@@ -1137,11 +1225,7 @@ const routes = {
         `INSERT INTO animal_sales
            (id, animal_id, price, buyer_name, reason, weight_kg, date, notes)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          id, d.animal_id, d.price || 0,
-          d.buyer || null, d.reason || 'sotish',
-          d.weight_kg || null, d.date, d.notes || null,
-        ]
+        [id, d.animal_id, d.price || 0, d.buyer || null, d.reason || 'sotish', d.weight_kg || null, d.date, d.notes || null]
       );
       await pool.query(
         'UPDATE animals SET status=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2',
@@ -1183,7 +1267,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname.startsWith('/api/')) {
-    const apiPath  = pathname.replace('/api', '');
+    const apiPath   = pathname.replace('/api', '');
     const directKey = `${method}:${apiPath}`;
     let handler = routes[directKey];
 
