@@ -21,6 +21,87 @@ button{cursor:pointer;border:none;font-family:inherit;font-size:14px;}
 input,select,textarea{font-family:inherit;font-size:14px;}
 a{color:inherit;text-decoration:none;}
 
+/* ── Splash Screen ── */
+#splash{
+  position:fixed;inset:0;z-index:99999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#0f5c1a 0%,#1a7a28 45%,#0d4a14 100%);
+  transition:opacity .55s cubic-bezier(.4,0,.2,1),visibility .55s;
+  overflow:hidden;
+}
+#splash.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+#splash::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 20% 50%,rgba(255,255,255,.04) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(255,255,255,.03) 0%,transparent 50%);
+  animation:splashBgPulse 3s ease-in-out infinite alternate;
+}
+@keyframes splashBgPulse{from{opacity:.6}to{opacity:1}}
+.splash-logo-wrap{
+  position:relative;width:130px;height:130px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:32px;
+}
+.splash-ring{
+  position:absolute;inset:-8px;border-radius:50%;
+  border:3px solid transparent;
+  border-top-color:rgba(255,255,255,.9);
+  border-right-color:rgba(255,255,255,.4);
+  animation:splashSpin .9s linear infinite;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,.5));
+}
+.splash-ring-2{
+  position:absolute;inset:-18px;border-radius:50%;
+  border:2px solid transparent;
+  border-bottom-color:rgba(144,238,144,.6);
+  border-left-color:rgba(144,238,144,.2);
+  animation:splashSpin 1.6s linear infinite reverse;
+}
+@keyframes splashSpin{to{transform:rotate(360deg)}}
+.splash-logo-circle{
+  width:110px;height:110px;border-radius:50%;
+  background:rgba(255,255,255,.12);
+  backdrop-filter:blur(8px);
+  border:1.5px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:52px;
+  animation:splashLogoPulse 2s ease-in-out infinite;
+  box-shadow:0 0 30px rgba(255,255,255,.1),inset 0 0 20px rgba(255,255,255,.05);
+}
+@keyframes splashLogoPulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 30px rgba(255,255,255,.1),inset 0 0 20px rgba(255,255,255,.05);}
+  50%{transform:scale(1.04);box-shadow:0 0 50px rgba(144,238,144,.25),inset 0 0 25px rgba(255,255,255,.08);}
+}
+.splash-check{
+  display:none;font-size:52px;
+  animation:splashCheckPop .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes splashCheckPop{
+  from{transform:scale(0) rotate(-20deg);opacity:0}
+  to{transform:scale(1) rotate(0deg);opacity:1}
+}
+.splash-title{
+  font-size:28px;font-weight:700;color:#fff;letter-spacing:.5px;
+  text-shadow:0 2px 12px rgba(0,0,0,.3);margin-bottom:6px;
+}
+.splash-sub{
+  font-size:14px;color:rgba(255,255,255,.7);letter-spacing:.3px;
+  min-height:20px;transition:all .3s ease;
+}
+.splash-progress-wrap{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:rgba(255,255,255,.1);
+}
+.splash-progress-bar{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,rgba(144,238,144,.6),rgba(255,255,255,.9),rgba(144,238,144,.6));
+  background-size:200% 100%;
+  border-radius:0 2px 2px 0;
+  transition:width .08s linear;
+  animation:splashShimmer 1.5s linear infinite;
+}
+@keyframes splashShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+
 /* ── Login ── */
 #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a5c12 0%,#2a7d1f 50%,#3da32e 100%);}
 .login-box{background:var(--card);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow-md);}
@@ -209,6 +290,22 @@ a{color:inherit;text-decoration:none;}
 </style>
 </head>
 <body>
+<!-- ══ SPLASH SCREEN ══ -->
+<div id="splash">
+  <div class="splash-logo-wrap">
+    <div class="splash-ring"></div>
+    <div class="splash-ring-2"></div>
+    <div class="splash-logo-circle" id="splash-icon">🐄</div>
+    <div class="splash-check" id="splash-check">✓</div>
+  </div>
+  <div class="splash-title">FermaApp</div>
+  <div class="splash-sub" id="splash-sub">Yuklanmoqda...</div>
+  <div class="splash-progress-wrap">
+    <div class="splash-progress-bar" id="splash-bar"></div>
+  </div>
+</div>
+<!-- ══ END SPLASH ══ -->
+
 
 <!-- Login -->
 <div id="login-screen">
@@ -607,10 +704,18 @@ const DEL  = p     => api('DELETE',p);
 
 async function initAuth(){
   S.token=getToken();
-  if(!S.token) return showLogin();
+  if(!S.token){
+    if(typeof window._splashFinish==='function') window._splashFinish();
+    return showLogin();
+  }
   const me=await GET('/me');
-  if(!me||me.error) return showLogin();
-  S.user=me; showApp();
+  if(!me||me.error){
+    if(typeof window._splashFinish==='function') window._splashFinish();
+    return showLogin();
+  }
+  S.user=me;
+  if(typeof window._splashFinish==='function') window._splashFinish();
+  showApp();
 }
 function logout(){ if(S.token) POST('/logout',{}); S.token=null; S.user=null; rmToken(); showLogin(); }
 function showLogin(){ document.getElementById('login-screen').style.display='flex'; document.getElementById('app').style.display='none'; }
@@ -1382,5 +1487,82 @@ window.login = async function() {
   }
 };
 </script>
+
+<!-- ══ SPLASH JS ══ -->
+<script>
+(function(){
+  var bar    = document.getElementById('splash-bar');
+  var sub    = document.getElementById('splash-sub');
+  var icon   = document.getElementById('splash-icon');
+  var check  = document.getElementById('splash-check');
+  var splash = document.getElementById('splash');
+
+  var progress = 0;
+  var done     = false;
+  var minTime  = 1600; // minimum display ms
+  var startedAt = Date.now();
+
+  // Smooth progress easing — fast start, slows near 90%, waits for done signal
+  var targets = [
+    {pct:30, delay:200},
+    {pct:55, delay:400},
+    {pct:75, delay:700},
+    {pct:88, delay:1000},
+    {pct:92, delay:1300},
+  ];
+
+  targets.forEach(function(t){
+    setTimeout(function(){
+      if(!done) setBar(t.pct);
+    }, t.delay);
+  });
+
+  function setBar(pct){
+    progress = pct;
+    bar.style.width = pct + '%';
+  }
+
+  function finish(){
+    var elapsed = Date.now() - startedAt;
+    var wait    = Math.max(0, minTime - elapsed);
+    setTimeout(function(){
+      // Complete bar
+      setBar(100);
+      // Show checkmark after bar fills
+      setTimeout(function(){
+        icon.style.display  = 'none';
+        check.style.display = 'flex';
+        sub.textContent     = 'Muvaffaqiyatli yuklandi!';
+        sub.style.color     = 'rgba(144,238,144,0.9)';
+        // Fade out after brief pause
+        setTimeout(function(){
+          splash.classList.add('hidden');
+          // Remove from DOM after transition
+          setTimeout(function(){
+            if(splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 600);
+        }, 450);
+      }, 220);
+    }, wait);
+  }
+
+  // Hook into initAuth — wrap it to call finish() when auth resolves
+  document.addEventListener('DOMContentLoaded', function(){
+    // Patch initAuth to signal splash when done
+    if(typeof window._splashReady === 'function'){
+      window._splashReady();
+    }
+  });
+
+  // Expose finish for the app to call
+  window._splashFinish = finish;
+
+  // Safety net: auto-finish after 3s no matter what
+  setTimeout(function(){
+    if(!done){ done=true; finish(); }
+  }, 3000);
+})();
+</script>
+<!-- ══ END SPLASH JS ══ -->
 </body>
 </html>
