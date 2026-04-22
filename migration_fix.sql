@@ -62,3 +62,50 @@ SELECT column_name, data_type, is_nullable
   FROM information_schema.columns
  WHERE table_name = 'animals'
  ORDER BY ordinal_position;
+
+-- ===========================================================================
+-- FermaApp v4 — Upgrade: Warehouse (Ombor) + Equipment (Texnika)
+-- ===========================================================================
+
+-- Warehouse items (Ombor mahsulotlari)
+CREATE TABLE IF NOT EXISTS warehouse_items (
+  id           VARCHAR(32)     PRIMARY KEY,
+  name         TEXT            NOT NULL,
+  category     VARCHAR(30)     DEFAULT 'boshqa',
+  unit         VARCHAR(20)     DEFAULT 'kg',
+  current_qty  DECIMAL(10,3)   DEFAULT 0,
+  min_qty      DECIMAL(10,3)   DEFAULT 0,
+  notes        TEXT,
+  created_at   TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Warehouse transactions (Kirim / Chiqim)
+CREATE TABLE IF NOT EXISTS warehouse_transactions (
+  id        VARCHAR(32)     PRIMARY KEY,
+  item_id   VARCHAR(32)     REFERENCES warehouse_items(id) ON DELETE SET NULL,
+  type      VARCHAR(3)      NOT NULL CHECK (type IN ('in','out')),
+  qty       DECIMAL(10,3)   NOT NULL,
+  date      DATE            DEFAULT CURRENT_DATE,
+  price     DECIMAL(12,2)   DEFAULT 0,
+  notes     TEXT,
+  created_at TIMESTAMP      DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Equipment / Texnika
+CREATE TABLE IF NOT EXISTS equipment (
+  id           VARCHAR(32)  PRIMARY KEY,
+  name         TEXT         NOT NULL,
+  type         VARCHAR(30)  DEFAULT 'boshqa',
+  status       VARCHAR(20)  DEFAULT 'working' CHECK (status IN ('working','repair','inactive')),
+  last_service DATE,
+  next_service DATE,
+  notes        TEXT,
+  created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for new tables
+CREATE INDEX IF NOT EXISTS idx_wh_tx_item   ON warehouse_transactions(item_id);
+CREATE INDEX IF NOT EXISTS idx_wh_tx_date   ON warehouse_transactions(date);
+CREATE INDEX IF NOT EXISTS idx_equip_status ON equipment(status);
