@@ -294,6 +294,27 @@ a{color:inherit;text-decoration:none;}
 .text-bold{font-weight:700;}
 .divider{height:1px;background:var(--border);margin:12px 0;}
 .section-gap{height:16px;}
+
+/* ── Family Tree ── */
+.family-node{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border);cursor:pointer;transition:all .15s;}
+.family-node:hover{border-color:var(--p);background:var(--pl);}
+.family-node-icon{font-size:22px;flex-shrink:0;}
+.family-node-info{flex:1;min-width:0;}
+.family-node-tag{font-weight:700;color:var(--p);font-size:15px;}
+.family-node-sub{font-size:12px;color:var(--muted);}
+.family-node-unknown{padding:10px 12px;background:#f9fafb;border-radius:var(--r-sm);border:1px dashed var(--border);color:var(--muted);font-size:13px;font-style:italic;}
+.family-section{margin-bottom:14px;}
+.family-section-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.children-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;}
+
+/* ── Temp No Milk ── */
+.no-milk-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;}
+.temp-no-milk-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.multi-check-group{display:flex;flex-direction:column;gap:8px;}
+.multi-check-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r-sm);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
+.multi-check-item:hover{border-color:var(--p);background:var(--pl);}
+.multi-check-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--p);cursor:pointer;}
+.multi-check-item.checked{border-color:var(--p);background:var(--pl);}
 </style>
 </head>
 <body>
@@ -366,9 +387,10 @@ a{color:inherit;text-decoration:none;}
           <option value="all">Barchasi</option>
           <option value="sut_beradi">Sut beradi</option>
           <option value="bogoz">Bog'oz</option>
-          <option value="vaqtincha">Vaqtincha yo'q</option>
           <option value="kasal">Kasal</option>
           <option value="bozak">Bozak</option>
+          <option value="buqa">Buqa</option>
+          <option value="sotib_olingan">Sotib olingan</option>
           <option value="sotildi">Sotildi</option>
           <option value="soyildi">So'yildi</option>
           <option value="nobud">Nobud bo'ldi</option>
@@ -469,24 +491,62 @@ a{color:inherit;text-decoration:none;}
         <select id="a-status">
           <option value="sut_beradi">Sut beradi</option>
           <option value="bogoz">Bog'oz (homilador)</option>
-          <option value="vaqtincha">Vaqtincha yo'q</option>
           <option value="kasal">Kasal</option>
           <option value="bozak">Bozak</option>
+          <option value="buqa">Buqa</option>
+          <option value="sotib_olingan">Sotib olingan</option>
           <option value="sotildi">Sotildi</option>
           <option value="soyildi">So'yildi</option>
           <option value="nobud">Nobud bo'ldi</option>
         </select>
       </div>
+      <div class="form-group"><label>Qo'shilish turi</label>
+        <select id="a-acquisition">
+          <option value="born">Fermada tug'ilgan</option>
+          <option value="purchased">Sotib olingan</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label>Tug'ish soni</label><input type="number" id="a-births" placeholder="0" min="0"></div>
-    </div>
-    <div class="form-row">
       <div class="form-group"><label>Kunlik sut (litr)</label><input type="number" id="a-milk" placeholder="0.0" step="0.5" min="0"><div class="form-hint">Taxminiy kunlik sut</div></div>
-      <div class="form-group"><label>Tug'ilgan sana</label><input type="date" id="a-bdate"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Oxirgi tug'gan sana</label><input type="date" id="a-calving"><div class="form-hint">So'nggi bola bergan sana</div></div>
-      <div class="form-group"><label>Urug'lantirilgan sana</label><input type="date" id="a-insem"><div class="form-hint">Uruglantirilgan sana</div></div>
+      <div class="form-group"><label>Tug'ilgan sana</label><input type="date" id="a-bdate"></div>
+      <div class="form-group"><label>Oxirgi tug'gan sana</label><input type="date" id="a-calving"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group"><label>Urug'lantirilgan sana</label><input type="date" id="a-insem"></div>
+    </div>
+
+    <!-- Oila bo'limi -->
+    <div class="divider"></div>
+    <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">🧬 Oila ma'lumotlari</div>
+
+    <!-- Ota -->
+    <div class="form-group">
+      <label>Otasi</label>
+      <select id="a-father" onchange="updateFatherUnknown()"><option value="">— Tanlanmagan —</option></select>
+      <div style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
+        <label class="multi-check-item" id="father-unknown-wrap" style="flex:1">
+          <input type="checkbox" id="a-father-unknown" onchange="if(this.checked){document.getElementById('a-father').value='';}">
+          <span>🧪 Suniy urug'lantirish / Otasi noma'lum</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Ona -->
+    <div class="form-group">
+      <label>Onasi</label>
+      <select id="a-mother"><option value="">— Tanlanmagan —</option></select>
+      <div style="margin-top:6px">
+        <label class="multi-check-item">
+          <input type="checkbox" id="a-mother-unknown">
+          <span>❓ Onasi noma'lum (sotib olingan)</span>
+        </label>
+      </div>
+    </div>
+
     <div class="form-group"><label>Izoh</label><textarea id="a-notes" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-animal')">Bekor</button>
@@ -534,9 +594,11 @@ a{color:inherit;text-decoration:none;}
     </div>
     <div class="detail-tabs">
       <button class="detail-tab active" onclick="switchDetailTab('info',this)">Ma'lumot</button>
+      <button class="detail-tab" onclick="switchDetailTab('family',this)">🧬 Oila</button>
       <button class="detail-tab" onclick="switchDetailTab('graph',this)">📊 Sut tarixi</button>
     </div>
     <div class="detail-panel active" id="detail-info"></div>
+    <div class="detail-panel" id="detail-family"><div class="loading">Yuklanmoqda...</div></div>
     <div class="detail-panel" id="detail-graph"><div class="loading">Grafik yuklanmoqda...</div></div>
     <div class="modal-footer" id="animal-detail-footer"></div>
   </div>
@@ -677,6 +739,39 @@ a{color:inherit;text-decoration:none;}
   </div>
 </div>
 
+<!-- Temp No Milk Modal -->
+<div class="modal-overlay" id="modal-temp-no-milk" style="display:none" onclick="bgClose(event,'modal-temp-no-milk')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⏸ Vaqtinchalik sut bermayapti</div>
+      <button class="modal-close" onclick="closeModal('modal-temp-no-milk')">✕</button>
+    </div>
+    <input type="hidden" id="tnm-animal-id">
+    <p class="text-muted" style="margin-bottom:14px;font-size:13px">Sababni belgilang. Belgilangan mol sut yig'im jadvalida ko'rinadi, lekin sut qo'shib bo'lmaydi.</p>
+    <div class="multi-check-group">
+      <label class="multi-check-item" id="tnm-kasal-wrap">
+        <input type="checkbox" id="tnm-kasal" value="kasal" onchange="toggleMultiCheck(this)">
+        <div><div style="font-weight:600">🤒 Kasal</div><div style="font-size:12px;color:var(--muted)">Davolanish vaqtida sut olmash ta'qiqlanadi</div></div>
+      </label>
+      <label class="multi-check-item" id="tnm-homilador-wrap">
+        <input type="checkbox" id="tnm-homilador" value="homilador" onchange="toggleMultiCheck(this)">
+        <div><div style="font-weight:600">🤰 Homilador</div><div style="font-size:12px;color:var(--muted)">Tug'ishdan oldin sut olmash ta'qiqlanadi</div></div>
+      </label>
+      <label class="multi-check-item" id="tnm-boshqa-wrap">
+        <input type="checkbox" id="tnm-boshqa" value="boshqa" onchange="toggleMultiCheck(this)">
+        <div><div style="font-weight:600">⚠️ Boshqa sabab</div><div style="font-size:12px;color:var(--muted)">Boshqa sababga ko'ra vaqtinchalik to'xtatildi</div></div>
+      </label>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:var(--pl);border-radius:var(--r-sm);font-size:12px;color:var(--muted)">
+      💡 Barcha sabablarni olib tashlash uchun hech birini belgilamay "Saqlash" ni bosing — mol yana sut yig'imga chiqadi.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-temp-no-milk')">Bekor</button>
+      <button class="btn btn-primary" style="flex:2" onclick="submitTempNoMilk()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -757,17 +852,23 @@ function shortDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); retur
 
 function statusBadge(s){
   const map={
-    sut_beradi:['badge-green','Sut beradi'],
-    nobud:     ['badge-gray','Nobud bo\'ldi'],
-    bogoz:     ['badge-purple','Bog\'oz'],
-    vaqtincha: ['badge-amber',"Vaqtincha yo'q"],
-    kasal:     ['badge-red','Kasal'],
-    bozak:     ['badge-blue','Bozak'],
-    sotildi:   ['badge-gray','Sotildi'],
-    soyildi:   ['badge-gray',"So'yildi"],
+    sut_beradi:     ['badge-green','Sut beradi'],
+    nobud:          ['badge-gray',"Nobud bo'ldi"],
+    bogoz:          ['badge-purple',"Bog'oz"],
+    kasal:          ['badge-red','Kasal'],
+    bozak:          ['badge-blue','Bozak'],
+    buqa:           ['badge-teal','Buqa'],
+    sotib_olingan:  ['badge-amber','Sotib olingan'],
+    sotildi:        ['badge-gray','Sotildi'],
+    soyildi:        ['badge-gray',"So'yildi"],
   };
   const [cls,label]=map[s]||['badge-gray',s];
   return `<span class="badge ${cls}">${label}</span>`;
+}
+function statusLabel(s){
+  const m={sut_beradi:'Sut beradi',bogoz:"Bog'oz",kasal:'Kasal',bozak:'Bozak',buqa:'Buqa',
+           sotib_olingan:'Sotib olingan',sotildi:'Sotildi',soyildi:"So'yildi",nobud:"Nobud bo'ldi"};
+  return m[s]||s;
 }
 function catLabel(c){ const m={em_xashak:'Em-xashak',dori:'Dori',mehnat:'Mehnat',uskunalar:'Uskunalar',kommunal:'Kommunal',boshqa:'Boshqa'}; return m[c]||c; }
 function typeLabel(t){ const m={sigir:'Sigir',buqa:'Buqa'}; return m[t]||t; }
@@ -820,9 +921,10 @@ function renderAnimals(){
     all:S.animals.length,
     sut_beradi:S.animals.filter(a=>a.status==='sut_beradi').length,
     bogoz:S.animals.filter(a=>a.status==='bogoz').length,
-    vaqtincha:S.animals.filter(a=>a.status==='vaqtincha').length,
     kasal:S.animals.filter(a=>a.status==='kasal').length,
     bozak:S.animals.filter(a=>a.status==='bozak').length,
+    buqa:S.animals.filter(a=>a.status==='buqa').length,
+    sotib_olingan:S.animals.filter(a=>a.status==='sotib_olingan').length,
     sotildi:S.animals.filter(a=>a.status==='sotildi').length,
     soyildi:S.animals.filter(a=>a.status==='soyildi').length,
     nobud:S.animals.filter(a=>a.status==='nobud').length,
@@ -831,9 +933,10 @@ function renderAnimals(){
     ['all','Barchasi','badge-gray'],
     ['sut_beradi','Sut beradi','badge-green'],
     ['bogoz',"Bog'oz",'badge-purple'],
-    ['vaqtincha',"Vaqtincha yo'q",'badge-amber'],
     ['kasal','Kasal','badge-red'],
     ['bozak','Bozak','badge-blue'],
+    ['buqa','Buqa','badge-teal'],
+    ['sotib_olingan','Sotib olingan','badge-amber'],
     ['sotildi','Sotildi','badge-gray'],
     ['soyildi',"So'yildi",'badge-gray'],
     ['nobud',"Nobud bo'ldi",'badge-gray'],
@@ -880,16 +983,28 @@ async function showAnimalDetail(id){
       ${a.insemination_date?`<div><div class="text-muted">Urug'lantirilgan</div><div><strong>${fmtDate(a.insemination_date)}</strong></div></div>`:''}
       <div><div class="text-muted">Qo'shilgan</div><div>${fmtDate((a.created_at||'').split('T')[0])}</div></div>
     </div>
+    ${(a.temp_no_milk&&a.temp_no_milk.length)?`
+    <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r-sm);padding:10px 12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-weight:600;font-size:13px;color:#92400e">⏸ Vaqtinchalik sut bermayapti</div>
+      <div class="temp-no-milk-row">${(a.temp_no_milk||[]).map(r=>{const lbl={kasal:'Kasal',homilador:'Homilador',boshqa:'Boshqa'}[r]||r;return `<span class="no-milk-badge">${lbl}</span>`;}).join('')}</div></div>
+      <button class="btn btn-sm btn-ghost" onclick="openTempNoMilkModal('${a.id}')">✏️</button>
+    </div>`:`
+    <div style="margin-bottom:12px">
+      <button class="btn btn-sm btn-ghost" style="font-size:12px" onclick="openTempNoMilkModal('${a.id}')">⏸ Vaqtinchalik sut to'xtatish</button>
+    </div>`}
     ${a.notes?`<div class="card" style="background:var(--bg);margin-bottom:0"><div class="text-muted" style="font-size:12px">Izoh</div><div style="margin-top:4px">${a.notes}</div></div>`:''}`;
 
+  document.getElementById('detail-family').innerHTML='<div class="loading">Yuklanmoqda...</div>';
   document.getElementById('detail-graph').innerHTML='<div class="loading">Grafik yuklanmoqda...</div>';
 
   const footer=document.getElementById('animal-detail-footer');
-  const isAdmin=S.user.role==='admin';
+  const isAdmin=S.user&&S.user.role==='admin';
+  const INACTIVE=['sotildi','nobud','soyildi'];
+  const NO_SELL=['buqa','bozak','sotib_olingan'];
   footer.innerHTML=`
     <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-animal-detail')">Yopish</button>
     <button class="btn btn-primary" style="flex:1" onclick="closeModal('modal-animal-detail');openEditAnimal('${a.id}')">Tahrirlash</button>
-    ${(!['sotildi','nobud','soyildi'].includes(a.status))?`<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>`:''}
+    ${(!INACTIVE.includes(a.status)&&!NO_SELL.includes(a.status))?`<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>`:''}
     ${isAdmin?`<button class="btn btn-danger" style="flex:0 0 auto" onclick="deleteAnimal('${a.id}')">🗑</button>`:''}`;
   openModal('modal-animal-detail');
 }
@@ -898,9 +1013,10 @@ function switchDetailTab(tab, el){
   document.querySelectorAll('.detail-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.detail-panel').forEach(p=>p.classList.remove('active'));
   if(el) el.classList.add('active');
-  else document.querySelectorAll('.detail-tab')[tab==='info'?0:1].classList.add('active');
+  else document.querySelectorAll('.detail-tab')[0].classList.add('active');
   document.getElementById('detail-'+tab).classList.add('active');
   if(tab==='graph' && S.currentDetailAnimalId) loadAnimalMilkGraph(S.currentDetailAnimalId);
+  if(tab==='family' && S.currentDetailAnimalId) loadAnimalFamily(S.currentDetailAnimalId);
 }
 
 async function loadAnimalMilkGraph(id){
@@ -966,6 +1082,10 @@ function openEditAnimal(id){
   document.getElementById('a-calving').value=a.last_calving_date?a.last_calving_date.split('T')[0]:'';
   document.getElementById('a-insem').value=a.insemination_date?a.insemination_date.split('T')[0]:'';
   document.getElementById('a-notes').value=a.notes||'';
+  document.getElementById('a-acquisition').value=a.acquisition_type||'born';
+  document.getElementById('a-father-unknown').checked=!!a.father_unknown;
+  document.getElementById('a-mother-unknown').checked=!!a.mother_unknown;
+  populateFamilySelects(a);
   openModal('modal-animal');
 }
 
@@ -981,6 +1101,10 @@ function openAddAnimalModal(){
   document.getElementById('a-bdate').value='';
   document.getElementById('a-calving').value='';
   document.getElementById('a-insem').value='';
+  document.getElementById('a-acquisition').value='born';
+  document.getElementById('a-father-unknown').checked=false;
+  document.getElementById('a-mother-unknown').checked=false;
+  populateFamilySelects(null);
   openModal('modal-animal');
 }
 
@@ -988,6 +1112,8 @@ async function submitAnimal(){
   const tag=document.getElementById('a-tag').value.trim();
   if(!tag){showToast('Quloq raqami kerak','error');return;}
   const editId=document.getElementById('animal-edit-id').value;
+  const fatherId=document.getElementById('a-father').value;
+  const motherId=document.getElementById('a-mother').value;
   const body={
     tag_number:tag, name:document.getElementById('a-name').value.trim(),
     type:document.getElementById('a-type').value,
@@ -999,6 +1125,11 @@ async function submitAnimal(){
     last_calving_date:document.getElementById('a-calving').value||null,
     insemination_date:document.getElementById('a-insem').value||null,
     notes:document.getElementById('a-notes').value.trim(),
+    acquisition_type:document.getElementById('a-acquisition').value||'born',
+    father_id:fatherId||null,
+    mother_id:motherId||null,
+    father_unknown:document.getElementById('a-father-unknown').checked,
+    mother_unknown:document.getElementById('a-mother-unknown').checked,
   };
   console.log('submitAnimal:', { editId, body });
   if (editId) {
@@ -1044,6 +1175,156 @@ async function deleteAnimal(id){
   loadAnimals();
 }
 
+// ── Family Tree ───────────────────────────────────────────────────────────────
+
+function populateFamilySelects(currentAnimal){
+  const editId = currentAnimal ? currentAnimal.id : null;
+  // Males for father, females for mother (exclude self)
+  const males   = S.animals.filter(a=>a.gender==='male'   && a.id!==editId);
+  const females = S.animals.filter(a=>a.gender==='female' && a.id!==editId);
+
+  const fatherSel = document.getElementById('a-father');
+  const motherSel = document.getElementById('a-mother');
+
+  fatherSel.innerHTML = '<option value="">— Tanlanmagan —</option>' +
+    males.map(a=>`<option value="${a.id}">#${a.tag_number}${a.name?' · '+a.name:''} (${statusLabel(a.status)})</option>`).join('');
+
+  motherSel.innerHTML = '<option value="">— Tanlanmagan —</option>' +
+    females.map(a=>`<option value="${a.id}">#${a.tag_number}${a.name?' · '+a.name:''} (${statusLabel(a.status)})</option>`).join('');
+
+  if(currentAnimal){
+    fatherSel.value = currentAnimal.father_id||'';
+    motherSel.value = currentAnimal.mother_id||'';
+  }
+}
+
+function updateFatherUnknown(){
+  // If a father is selected, uncheck unknown
+  const sel = document.getElementById('a-father');
+  if(sel.value) document.getElementById('a-father-unknown').checked=false;
+}
+
+async function loadAnimalFamily(id){
+  const panel = document.getElementById('detail-family');
+  panel.innerHTML='<div class="loading">Yuklanmoqda...</div>';
+  const data = await GET('/animals/'+id+'/family');
+  if(!data||data.error){
+    panel.innerHTML='<div class="empty"><div>Ma\'lumot yuklashda xatolik</div></div>';
+    return;
+  }
+
+  const animalLink = (a,icon='🐄')=>{
+    if(!a) return '';
+    return `<div class="family-node" onclick="closeModal('modal-animal-detail');setTimeout(()=>showAnimalDetail('${a.id}'),100)">
+      <div class="family-node-icon">${icon}</div>
+      <div class="family-node-info">
+        <div class="family-node-tag">#${a.tag_number}${a.name?' — '+a.name:''}</div>
+        <div class="family-node-sub">${statusLabel(a.status)}</div>
+      </div>
+      <span style="color:var(--muted);font-size:18px">›</span>
+    </div>`;
+  };
+
+  const unknownNode = (label)=>
+    `<div class="family-node-unknown">${label}</div>`;
+
+  // Father section
+  let fatherHtml='';
+  if(data.father){
+    fatherHtml=animalLink(data.father,'🐂');
+  } else if(data.father_unknown){
+    const isAI = data.acquisition_type!=='purchased';
+    fatherHtml=unknownNode(isAI ? '🧪 Suniy urug\'lantirish — ota noma\'lum' : '❓ Ota noma\'lum');
+  } else {
+    fatherHtml=unknownNode('— Ota belgilanmagan');
+  }
+
+  // Mother section
+  let motherHtml='';
+  if(data.mother){
+    motherHtml=animalLink(data.mother,'🐄');
+  } else if(data.mother_unknown){
+    motherHtml=unknownNode('❓ Ona noma\'lum (sotib olingan mol)');
+  } else {
+    motherHtml=unknownNode('— Ona belgilanmagan');
+  }
+
+  // Children
+  let childrenHtml='';
+  if(data.children && data.children.length){
+    childrenHtml=`<div class="children-grid">${data.children.map(c=>{
+      const icon=c.gender==='male'?'🐂':'🐄';
+      return `<div class="family-node" onclick="closeModal('modal-animal-detail');setTimeout(()=>showAnimalDetail('${c.id}'),100)">
+        <div class="family-node-icon">${icon}</div>
+        <div class="family-node-info">
+          <div class="family-node-tag">#${c.tag_number}${c.name?' · '+c.name:''}</div>
+          <div class="family-node-sub">${c.birth_date?fmtDate(c.birth_date)+' · ':''} ${statusLabel(c.status)}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  } else {
+    childrenHtml='<div class="family-node-unknown">— Bolalari yo\'q yoki belgilanmagan</div>';
+  }
+
+  const acqLabel = data.acquisition_type==='purchased' ? '🛒 Sotib olingan' : '🏡 Fermada tug\'ilgan';
+
+  panel.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span class="badge badge-gray" style="font-size:12px">${acqLabel}</span>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('modal-animal-detail');openEditAnimal('${id}')">✏️ Tahrirlash</button>
+    </div>
+    <div class="family-section">
+      <div class="family-section-title">🐂 Otasi</div>
+      ${fatherHtml}
+    </div>
+    <div class="family-section">
+      <div class="family-section-title">🐄 Onasi</div>
+      ${motherHtml}
+    </div>
+    <div class="family-section">
+      <div class="family-section-title">🐣 Bolalari (${data.children?data.children.length:0} ta)</div>
+      ${childrenHtml}
+    </div>`;
+}
+
+// ── Temp No Milk ──────────────────────────────────────────────────────────────
+
+function toggleMultiCheck(cb){
+  const wrap = cb.closest('.multi-check-item');
+  if(wrap) wrap.classList.toggle('checked', cb.checked);
+}
+
+function openTempNoMilkModal(animalId){
+  const a = S.animals.find(x=>x.id===animalId);
+  if(!a) return;
+  document.getElementById('tnm-animal-id').value=animalId;
+  const reasons = a.temp_no_milk||[];
+  ['kasal','homilador','boshqa'].forEach(r=>{
+    const cb = document.getElementById('tnm-'+r);
+    cb.checked = reasons.includes(r);
+    toggleMultiCheck(cb);
+  });
+  // Close detail modal and open tnm modal
+  closeModal('modal-animal-detail');
+  openModal('modal-temp-no-milk');
+}
+
+async function submitTempNoMilk(){
+  const animalId = document.getElementById('tnm-animal-id').value;
+  const reasons = ['kasal','homilador','boshqa'].filter(r=>document.getElementById('tnm-'+r).checked);
+  const res = await PUT('/animals/'+animalId+'/temp-no-milk', {reasons});
+  if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
+  const msg = reasons.length
+    ? `Vaqtinchalik to'xtatildi: ${reasons.map(r=>({kasal:'Kasal',homilador:'Homilador',boshqa:'Boshqa'}[r])).join(', ')}`
+    : 'Vaqtinchalik to\'siq olib tashlandi';
+  showToast(msg,'success');
+  closeModal('modal-temp-no-milk');
+  // Update local animal data
+  const a = S.animals.find(x=>x.id===animalId);
+  if(a) a.temp_no_milk=reasons;
+  loadAnimals();
+}
+
 // ── Milk ──────────────────────────────────────────────────────────────────────
 async function loadMilk(){
   const date=document.getElementById('milk-date').value||today();
@@ -1064,14 +1345,22 @@ async function loadMilk(){
   }
   document.getElementById('milk-table-body').innerHTML=rows.map(r=>{
     const isAdmin=S.user&&S.user.role==='admin';
+    const blocked = r.temp_no_milk && r.temp_no_milk.length > 0;
+    const noMilkLabels = {kasal:'Kasal',homilador:'Homilador',boshqa:'Boshqa'};
+    const blockBadge = blocked
+      ? `<div class="temp-no-milk-row">${r.temp_no_milk.map(x=>`<span class="no-milk-badge">${noMilkLabels[x]||x}</span>`).join('')}</div>`
+      : '';
+    const addBtn = (session) => blocked
+      ? `<button class="add-session-btn" style="background:#fee2e2;color:var(--red);cursor:not-allowed" title="Vaqtinchalik sut bermayapti" disabled>⏸</button>`
+      : `<button class="add-session-btn" onclick="openMilkModal('${r.id}','${r.tag_number}',${session},'${date}')" title="Qo'shish">+</button>`;
     const s1Html=r.s1!==null
       ?`<div class="session-cell"><span class="session-val">${fmtL(r.s1)}</span>${isAdmin?`<button class="del-session-btn" onclick="deleteMilkSession('${r.s1_id}','${date}')" title="O'chirish">✕</button>`:''}</div>`
-      :`<div class="session-cell"><span class="session-empty">—</span><button class="add-session-btn" onclick="openMilkModal('${r.id}','${r.tag_number}',1,'${date}')" title="Qo'shish">+</button></div>`;
+      :`<div class="session-cell"><span class="session-empty">—</span>${addBtn(1)}</div>`;
     const s2Html=r.s2!==null
       ?`<div class="session-cell"><span class="session-val">${fmtL(r.s2)}</span>${isAdmin?`<button class="del-session-btn" onclick="deleteMilkSession('${r.s2_id}','${date}')" title="O'chirish">✕</button>`:''}</div>`
-      :`<div class="session-cell"><span class="session-empty">—</span><button class="add-session-btn" onclick="openMilkModal('${r.id}','${r.tag_number}',2,'${date}')" title="Qo'shish">+</button></div>`;
+      :`<div class="session-cell"><span class="session-empty">—</span>${addBtn(2)}</div>`;
     return `<tr>
-      <td><strong>#${r.tag_number}</strong>${r.name?`<br><span style="font-size:12px;color:var(--muted)">${r.name}</span>`:''}${r.status!=='sut_beradi'?`<br>${statusBadge(r.status)}`:''}
+      <td><strong>#${r.tag_number}</strong>${r.name?`<br><span style="font-size:12px;color:var(--muted)">${r.name}</span>`:''}${r.status!=='sut_beradi'?`<br>${statusBadge(r.status)}`:''}${blockBadge}
       </td>
       <td>${s1Html}</td>
       <td>${s2Html}</td>
@@ -1087,15 +1376,14 @@ async function loadMilk(){
 }
 
 async function openMilkModal(animalId='', animalTag='', session=1, date=''){
-  // Load animals list
   if(!S.animals.length) await loadAnimals();
   const select=document.getElementById('m-animal');
-  const activeAnimals=a=>!['sotildi','nobud','soyildi'].includes(a.status);
+  const NEVER=['sotildi','nobud','soyildi','buqa','bozak','sotib_olingan'];
+  const activeAnimals=a=>!NEVER.includes(a.status) && !(a.temp_no_milk&&a.temp_no_milk.length);
   select.innerHTML='<option value="">Molni tanlang...</option>'+
     S.animals.filter(activeAnimals).map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
   if(animalId){
     select.value=animalId;
-    // If value not set (option not found), try again - animals may not include this animal
     if(select.value!==animalId){
       await loadAnimals();
       select.innerHTML='<option value="">Molni tanlang...</option>'+
