@@ -1,6 +1,6 @@
 /**
  * FermaApp — AndBillur Ferma boshqaruv tizimi
- * server.js v3 — Family Tree (Ota/Ona/Bolalar) + temp_no_milk support
+ * server.js v4 — Family Tree + Warehouse (Ombor) + Equipment (Texnika)
  *
  * CHANGELOG v3:
  * 1. [NEW] animals.father_id / mother_id — ota/ona FK (nullable)
@@ -179,7 +179,51 @@ async function initDB() {
 
     await pool.query(`DELETE FROM password_resets WHERE expires_at < NOW() - INTERVAL '1 day'`).catch(() => {});
 
-    console.log('DB ready (v3 — Family Tree)');
+
+    // ── Warehouse & Equipment tables (v4 upgrade) ──────────────────────────────
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS warehouse_items (
+        id           VARCHAR(32)     PRIMARY KEY,
+        name         TEXT            NOT NULL,
+        category     VARCHAR(30)     DEFAULT 'boshqa',
+        unit         VARCHAR(20)     DEFAULT 'kg',
+        current_qty  DECIMAL(10,3)   DEFAULT 0,
+        min_qty      DECIMAL(10,3)   DEFAULT 0,
+        notes        TEXT,
+        created_at   TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+        updated_at   TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS warehouse_transactions (
+        id         VARCHAR(32)   PRIMARY KEY,
+        item_id    VARCHAR(32)   REFERENCES warehouse_items(id) ON DELETE SET NULL,
+        type       VARCHAR(3)    NOT NULL CHECK (type IN ('in','out')),
+        qty        DECIMAL(10,3) NOT NULL,
+        date       DATE          DEFAULT CURRENT_DATE,
+        price      DECIMAL(12,2) DEFAULT 0,
+        notes      TEXT,
+        created_at TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS equipment (
+        id           VARCHAR(32)  PRIMARY KEY,
+        name         TEXT         NOT NULL,
+        type         VARCHAR(30)  DEFAULT 'boshqa',
+        status       VARCHAR(20)  DEFAULT 'working' CHECK (status IN ('working','repair','inactive')),
+        last_service DATE,
+        next_service DATE,
+        notes        TEXT,
+        created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+        updated_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_wh_tx_item   ON warehouse_transactions(item_id)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_wh_tx_date   ON warehouse_transactions(date)`);
+    await safeAlter(`CREATE INDEX IF NOT EXISTS idx_equip_status ON equipment(status)`);
+
+    console.log('DB ready (v4 — Warehouse + Equipment)');
   } catch (e) {
     console.error('DB init error:', e);
   }
@@ -1237,6 +1281,216 @@ const routes = {
       json(res, { error: 'Server xatosi: ' + e.message }, 500);
     }
   },
+
+  // ── Warehouse Items ────────────────────────────────────────────────────────
+  'GET:/warehouse/items': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const r = await pool.query(
+        'SELECT * FROM warehouse_items ORDER BY category, name'
+      );
+      json(res, r.rows);
+    } catch (e) {
+      console.error('GET /warehouse/items error:', e);
+      json(res, { error: 'Server xatosi' }, 500);
+    }
+  },
+
+  'POST:/warehouse/items': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const d = await parseBody(req);
+      if (!d.name) return json(res, { error: 'Mahsulot nomi kerak' }, 400);
+      const id = uuid();
+      await pool.query(
+        `INSERT INTO warehouse_items (id, name, category, unit, current_qty, min_qty, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [id, d.name, d.category||'boshqa', d.unit||'kg',
+         d.current_qty||0, d.min_qty||0, d.notes||null]
+      );
+      json(res, (await pool.query('SELECT * FROM warehouse_items WHERE id=$1', [id])).rows[0]);
+    } catch (e) {
+      console.error('POST /warehouse/items error:', e);
+      json(res, { error: 'Xatolik: ' + e.message }, 400);
+    }
+  },
+
+  'PUT:/warehouse/items/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const id = pathId(req.url, 3);
+      const d  = await parseBody(req);
+      if (!d.name) return json(res, { error: 'Mahsulot nomi kerak' }, 400);
+      const r = await pool.query(
+        `UPDATE warehouse_items
+            SET name=$1, category=$2, unit=$3, current_qty=$4, min_qty=$5, notes=$6,
+                updated_at=CURRENT_TIMESTAMP
+          WHERE id=$7 RETURNING *`,
+        [d.name, d.category||'boshqa', d.unit||'kg',
+         d.current_qty||0, d.min_qty||0, d.notes||null, id]
+      );
+      if (!r.rows.length) return json(res, { error: 'Mahsulot topilmadi' }, 404);
+      json(res, r.rows[0]);
+    } catch (e) {
+      console.error('PUT /warehouse/items/:id error:', e);
+      json(res, { error: 'Xatolik: ' + e.message }, 400);
+    }
+  },
+
+  'DELETE:/warehouse/items/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const id = pathId(req.url, 3);
+      const r  = await pool.query('DELETE FROM warehouse_items WHERE id=$1 RETURNING *', [id]);
+      if (!r.rows.length) return json(res, { error: 'Mahsulot topilmadi' }, 404);
+      json(res, { success: true });
+    } catch (e) {
+      console.error('DELETE /warehouse/items/:id error:', e);
+      json(res, { error: 'Xatolik' }, 500);
+    }
+  },
+
+  // ── Warehouse Transactions ─────────────────────────────────────────────────
+  'GET:/warehouse/transactions': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const limit = parseInt(new URL(req.url, 'http://localhost').searchParams.get('limit') || '50');
+      const r = await pool.query(
+        `SELECT wt.*, wi.name AS item_name, wi.unit
+           FROM warehouse_transactions wt
+           LEFT JOIN warehouse_items wi ON wt.item_id = wi.id
+          ORDER BY wt.date DESC, wt.created_at DESC
+          LIMIT $1`,
+        [limit]
+      );
+      json(res, r.rows);
+    } catch (e) {
+      console.error('GET /warehouse/transactions error:', e);
+      json(res, { error: 'Server xatosi' }, 500);
+    }
+  },
+
+  'POST:/warehouse/transactions': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const d = await parseBody(req);
+      if (!d.item_id) return json(res, { error: 'Mahsulot kerak' }, 400);
+      if (!d.qty || parseFloat(d.qty) <= 0) return json(res, { error: "Miqdor 0 dan katta bo'lishi kerak" }, 400);
+      if (!['in','out'].includes(d.type)) return json(res, { error: "Tur 'in' yoki 'out' bo'lishi kerak" }, 400);
+
+      const itemR = await pool.query('SELECT * FROM warehouse_items WHERE id=$1', [d.item_id]);
+      if (!itemR.rows[0]) return json(res, { error: 'Mahsulot topilmadi' }, 404);
+
+      const qty = parseFloat(d.qty);
+      const currentQty = parseFloat(itemR.rows[0].current_qty);
+
+      if (d.type === 'out' && qty > currentQty) {
+        return json(res, {
+          error: `Yetarli mahsulot yo'q. Mavjud: ${currentQty} ${itemR.rows[0].unit}, so'ralgan: ${qty}`
+        }, 400);
+      }
+
+      const newQty = d.type === 'in' ? currentQty + qty : currentQty - qty;
+      const id = uuid();
+
+      await pool.query(
+        `INSERT INTO warehouse_transactions (id, item_id, type, qty, date, price, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [id, d.item_id, d.type, qty, d.date||new Date().toISOString().split('T')[0], d.price||0, d.notes||null]
+      );
+      await pool.query(
+        'UPDATE warehouse_items SET current_qty=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2',
+        [newQty, d.item_id]
+      );
+
+      json(res, {
+        success: true,
+        transaction: (await pool.query('SELECT * FROM warehouse_transactions WHERE id=$1', [id])).rows[0],
+        new_qty: newQty,
+      });
+    } catch (e) {
+      console.error('POST /warehouse/transactions error:', e);
+      json(res, { error: 'Server xatosi: ' + e.message }, 500);
+    }
+  },
+
+  // ── Equipment / Texnika ────────────────────────────────────────────────────
+  'GET:/equipment': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      json(res, (await pool.query(
+        'SELECT * FROM equipment ORDER BY status, name'
+      )).rows);
+    } catch (e) {
+      console.error('GET /equipment error:', e);
+      json(res, { error: 'Server xatosi' }, 500);
+    }
+  },
+
+  'POST:/equipment': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const d = await parseBody(req);
+      if (!d.name) return json(res, { error: 'Texnika nomi kerak' }, 400);
+      const id = uuid();
+      await pool.query(
+        `INSERT INTO equipment (id, name, type, status, last_service, next_service, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [id, d.name, d.type||'boshqa', d.status||'working',
+         d.last_service||null, d.next_service||null, d.notes||null]
+      );
+      json(res, (await pool.query('SELECT * FROM equipment WHERE id=$1', [id])).rows[0]);
+    } catch (e) {
+      console.error('POST /equipment error:', e);
+      json(res, { error: 'Xatolik: ' + e.message }, 400);
+    }
+  },
+
+  'PUT:/equipment/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const id = pathId(req.url, 2);
+      const d  = await parseBody(req);
+      if (!d.name) return json(res, { error: 'Texnika nomi kerak' }, 400);
+      const r = await pool.query(
+        `UPDATE equipment
+            SET name=$1, type=$2, status=$3, last_service=$4, next_service=$5, notes=$6,
+                updated_at=CURRENT_TIMESTAMP
+          WHERE id=$7 RETURNING *`,
+        [d.name, d.type||'boshqa', d.status||'working',
+         d.last_service||null, d.next_service||null, d.notes||null, id]
+      );
+      if (!r.rows.length) return json(res, { error: 'Texnika topilmadi' }, 404);
+      json(res, r.rows[0]);
+    } catch (e) {
+      console.error('PUT /equipment/:id error:', e);
+      json(res, { error: 'Xatolik: ' + e.message }, 400);
+    }
+  },
+
+  'DELETE:/equipment/:id': async (req, res) => {
+    const u = await auth(req);
+    if (!u) return json(res, { error: 'Unauthorized' }, 401);
+    try {
+      const id = pathId(req.url, 2);
+      const r  = await pool.query('DELETE FROM equipment WHERE id=$1 RETURNING *', [id]);
+      if (!r.rows.length) return json(res, { error: 'Texnika topilmadi' }, 404);
+      json(res, { success: true });
+    } catch (e) {
+      console.error('DELETE /equipment/:id error:', e);
+      json(res, { error: 'Xatolik' }, 500);
+    }
+  },
+
 };
 
 // ---------------------------------------------------------------------------
