@@ -264,6 +264,8 @@ a{color:inherit;text-decoration:none;}
           <option value="kasal">Kasal</option>
           <option value="bozak">Bozak</option>
           <option value="sotildi">Sotildi</option>
+          <option value="soyildi">So'yildi</option>
+          <option value="nobud">Nobud bo'ldi</option>
         </select>
       </div>
       <div id="animals-count-row" class="count-row"></div>
@@ -365,6 +367,8 @@ a{color:inherit;text-decoration:none;}
           <option value="kasal">Kasal</option>
           <option value="bozak">Bozak</option>
           <option value="sotildi">Sotildi</option>
+          <option value="soyildi">So'yildi</option>
+          <option value="nobud">Nobud bo'ldi</option>
         </select>
       </div>
       <div class="form-group"><label>Tug'ish soni</label><input type="number" id="a-births" placeholder="0" min="0"></div>
@@ -646,6 +650,7 @@ function statusBadge(s){
     kasal:     ['badge-red','Kasal'],
     bozak:     ['badge-blue','Bozak'],
     sotildi:   ['badge-gray','Sotildi'],
+    soyildi:   ['badge-gray',"So'yildi"],
   };
   const [cls,label]=map[s]||['badge-gray',s];
   return `<span class="badge ${cls}">${label}</span>`;
@@ -705,6 +710,8 @@ function renderAnimals(){
     kasal:S.animals.filter(a=>a.status==='kasal').length,
     bozak:S.animals.filter(a=>a.status==='bozak').length,
     sotildi:S.animals.filter(a=>a.status==='sotildi').length,
+    soyildi:S.animals.filter(a=>a.status==='soyildi').length,
+    nobud:S.animals.filter(a=>a.status==='nobud').length,
   };
   const chips=[
     ['all','Barchasi','badge-gray'],
@@ -712,9 +719,10 @@ function renderAnimals(){
     ['bogoz',"Bog'oz",'badge-purple'],
     ['vaqtincha',"Vaqtincha yo'q",'badge-amber'],
     ['kasal','Kasal','badge-red'],
-    ['nobud',"Nobud bo'ldi",'badge-gray'],
     ['bozak','Bozak','badge-blue'],
     ['sotildi','Sotildi','badge-gray'],
+    ['soyildi',"So'yildi",'badge-gray'],
+    ['nobud',"Nobud bo'ldi",'badge-gray'],
   ];
   const cur=document.getElementById('animal-status-filter').value;
   document.getElementById('animals-count-row').innerHTML=chips.map(([v,l,cls])=>
@@ -767,7 +775,7 @@ async function showAnimalDetail(id){
   footer.innerHTML=`
     <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-animal-detail')">Yopish</button>
     <button class="btn btn-primary" style="flex:1" onclick="closeModal('modal-animal-detail');openEditAnimal('${a.id}')">Tahrirlash</button>
-    ${(a.status!=='sotildi'&&a.status!=='nobud')?`<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>`:''}
+    ${(!['sotildi','nobud','soyildi'].includes(a.status))?`<button class="btn btn-amber" style="flex:1" onclick="closeModal('modal-animal-detail');openSellModal('${a.id}')">Sotish</button>`:''}
     ${isAdmin?`<button class="btn btn-danger" style="flex:0 0 auto" onclick="deleteAnimal('${a.id}')">🗑</button>`:''}`;
   openModal('modal-animal-detail');
 }
@@ -968,15 +976,16 @@ async function openMilkModal(animalId='', animalTag='', session=1, date=''){
   // Load animals list
   if(!S.animals.length) await loadAnimals();
   const select=document.getElementById('m-animal');
+  const activeAnimals=a=>!['sotildi','nobud','soyildi'].includes(a.status);
   select.innerHTML='<option value="">Molni tanlang...</option>'+
-    S.animals.filter(a=>a.status!=='sotildi'&&a.status!=='nobud').map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
+    S.animals.filter(activeAnimals).map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
   if(animalId){
     select.value=animalId;
     // If value not set (option not found), try again - animals may not include this animal
     if(select.value!==animalId){
       await loadAnimals();
       select.innerHTML='<option value="">Molni tanlang...</option>'+
-        S.animals.filter(a=>a.status!=='sotildi'&&a.status!=='nobud').map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
+        S.animals.filter(activeAnimals).map(a=>`<option value="${a.id}">${a.tag_number}${a.name?' · '+a.name:''}</option>`).join('');
       select.value=animalId;
     }
   }
@@ -1022,13 +1031,20 @@ async function deleteMilkSession(id, date){
 
 // ── Milk Sales ────────────────────────────────────────────────────────────────
 async function loadMilkSales(){
-  const [todayRecs,allRecs]=await Promise.all([GET('/milk-sales?date='+today()),GET('/milk-sales?limit=40')]);
+  const [todayRecs,allRecs,stock]=await Promise.all([
+    GET('/milk-sales?date='+today()),
+    GET('/milk-sales?limit=40'),
+    GET('/milk/stock'),
+  ]);
   if(!todayRecs||!allRecs) return;
   const totalL=todayRecs.reduce((s,r)=>s+parseFloat(r.liters),0);
   const totalRev=todayRecs.reduce((s,r)=>s+parseFloat(r.total),0);
+  const availL=stock?parseFloat(stock.available):0;
+  const stockColor=availL<=0?'red':availL<100?'amber':'teal';
   document.getElementById('milk-sales-stats').innerHTML=`
     <div class="stat-card teal"><div class="stat-label">Bugun sotilgan</div><div class="stat-val">${fmtL(totalL)}</div></div>
-    <div class="stat-card green"><div class="stat-label">Bugun daromad</div><div class="stat-val" style="font-size:18px">${fmtSum(totalRev)}</div></div>`;
+    <div class="stat-card green"><div class="stat-label">Bugun daromad</div><div class="stat-val" style="font-size:18px">${fmtSum(totalRev)}</div></div>
+    <div class="stat-card ${stockColor}"><div class="stat-label">Omborda mavjud</div><div class="stat-val">${fmtL(availL)}</div></div>`;
   if(!allRecs.length){document.getElementById('milk-sales-list').innerHTML='<div class="empty"><div class="empty-icon">🛒</div><div>Hali sotuv yo\'q</div></div>';return;}
   document.getElementById('milk-sales-list').innerHTML=allRecs.map(r=>`
     <div class="list-item">
@@ -1198,7 +1214,10 @@ async function submitSale(){
   const res=await POST('/sales',body);
   if(!res||res.error){showToast(res?.error||'Xatolik','error');return;}
   const soldReason=document.getElementById('s-reason').value;
-  showToast(soldReason==='nobud'?"Mol 'nobud' holatiga o'tdi":"Mol 'sotildi' holatiga o'tdi",'success');
+  const toastMsg = soldReason==='nobud'   ? "Mol 'nobud' holatiga o'tdi"
+                 : soldReason==='soyish'  ? "Mol 'so'yildi' holatiga o'tdi"
+                 : "Mol 'sotildi' holatiga o'tdi";
+  showToast(toastMsg,'success');
   closeModal('modal-sell'); loadAnimals();
 }
 
